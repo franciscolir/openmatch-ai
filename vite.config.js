@@ -17,7 +17,8 @@ function serveStaticAssets() {
     name: "serve-static-assets",
     configureServer(server) {
       server.middlewares.use("/wasm", async (req, res, next) => {
-        const filePath = resolve(wasmRoot, req.url.replace(/^\//, ""));
+        const filename = req.url.split("?")[0].replace(/^\//, "");
+        const filePath = resolve(wasmRoot, filename);
         const ext = extname(filePath);
         try {
           const content = await readFile(filePath);
@@ -29,7 +30,8 @@ function serveStaticAssets() {
         }
       });
       server.middlewares.use("/models", async (req, res, next) => {
-        const filePath = resolve(modelsRoot, req.url.replace(/^\//, ""));
+        const filename = req.url.split("?")[0].replace(/^\//, "");
+        const filePath = resolve(modelsRoot, filename);
         try {
           const content = await readFile(filePath);
           res.setHeader("Content-Type", "application/octet-stream");

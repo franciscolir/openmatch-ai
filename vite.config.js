@@ -1,28 +1,56 @@
-import { cp, mkdir } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { cp, mkdir, readFile } from "node:fs/promises";
+import { dirname, extname, resolve } from "node:path";
 import { defineConfig } from "vite";
 
-const staticAssets = [
-  ["src/models", "models"],
-  ["node_modules/@mediapipe/tasks-vision/wasm", "wasm"]
-];
+const MIME_TYPES = {
+  ".js": "text/javascript",
+  ".wasm": "application/wasm",
+  ".tflite": "application/octet-stream",
+  ".task": "application/octet-stream"
+};
 
-function copyVisionAssets() {
+const wasmRoot = resolve("node_modules/@mediapipe/tasks-vision/wasm");
+const modelsRoot = resolve("src/models");
+
+function serveStaticAssets() {
   return {
-    name: "copy-vision-assets",
-    async buildStart() {
-      for (const [source, destination] of staticAssets) {
-        const target = resolve("public", destination);
+    name: "serve-static-assets",
+    configureServer(server) {
+      server.middlewares.use("/wasm", async (req, res, next) => {
+        const filePath = resolve(wasmRoot, req.url.replace(/^\//, ""));
+        const ext = extname(filePath);
+        try {
+          const content = await readFile(filePath);
+          res.setHeader("Content-Type", MIME_TYPES[ext] || "application/octet-stream");
+          res.statusCode = 200;
+          res.end(content);
+        } catch {
+          next();
+        }
+      });
+      server.middlewares.use("/models", async (req, res, next) => {
+        const filePath = resolve(modelsRoot, req.url.replace(/^\//, ""));
+        try {
+          const content = await readFile(filePath);
+          res.setHeader("Content-Type", "application/octet-stream");
+          res.statusCode = 200;
+          res.end(content);
+        } catch {
+          next();
+        }
+      });
+    },
+    async closeBundle() {
+      for (const [source, destination] of [["src/models", "models"], [wasmRoot, "wasm"]]) {
+        const target = resolve("dist", destination);
         await mkdir(dirname(target), { recursive: true });
         await cp(resolve(source), target, { recursive: true });
       }
-    },
-    async closeBundle() {
       await cp(resolve("service-worker.js"), resolve("dist/service-worker.js"));
     }
   };
 }
 
 export default defineConfig({
-  plugins: [copyVisionAssets()]
+  plugins: [serveStaticAssets()]
 });

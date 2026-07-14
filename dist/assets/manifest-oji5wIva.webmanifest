@@ -1,0 +1,10 @@
+{
+  "name": "OpenMatch AI",
+  "short_name": "OpenMatch",
+  "description": "Análisis táctico privado de fútbol en el navegador.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0a1020",
+  "theme_color": "#0a1020",
+  "icons": [{ "src": "./src/assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

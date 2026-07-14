@@ -329,7 +329,7 @@ export class App {
         if (lengthEl) lengthEl.value = field.length;
         if (widthEl) widthEl.value = field.width;
       }
-    } catch { }
+    } catch (error) { console.warn("No se pudieron restaurar los ajustes:", error?.message || error); }
   }
 
   #destroy() {

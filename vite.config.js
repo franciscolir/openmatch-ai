@@ -10,12 +10,14 @@ const staticAssets = [
 function copyVisionAssets() {
   return {
     name: "copy-vision-assets",
-    async closeBundle() {
+    async buildStart() {
       for (const [source, destination] of staticAssets) {
-        const target = resolve("dist", destination);
+        const target = resolve("public", destination);
         await mkdir(dirname(target), { recursive: true });
         await cp(resolve(source), target, { recursive: true });
       }
+    },
+    async closeBundle() {
       await cp(resolve("service-worker.js"), resolve("dist/service-worker.js"));
     }
   };

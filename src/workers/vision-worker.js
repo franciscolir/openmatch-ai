@@ -4,15 +4,11 @@ let detector;
 let poseLandmarker;
 let mode;
 
-const assetPath = (developmentPath, productionPath) =>
-  import.meta.env.DEV ? developmentPath : productionPath;
-
 async function initialize(settings) {
   mode = settings;
-  const wasmRoot = assetPath("/node_modules/@mediapipe/tasks-vision/wasm", "/wasm");
-  const vision = await FilesetResolver.forVisionTasks(wasmRoot);
-  const detectorModel = assetPath("/src/models/efficientdet_lite0.tflite", "/models/efficientdet_lite0.tflite");
-  const poseModel = assetPath("/src/models/pose_landmarker_lite.task", "/models/pose_landmarker_lite.task");
+  const vision = await FilesetResolver.forVisionTasks("/wasm");
+  const detectorModel = "/models/efficientdet_lite0.tflite";
+  const poseModel = "/models/pose_landmarker_lite.task";
   detector = await ObjectDetector.createFromOptions(vision, {
     baseOptions: { modelAssetPath: detectorModel },
     runningMode: "VIDEO",

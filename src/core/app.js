@@ -7,6 +7,7 @@ import { AnalysisController } from "../modules/detection/analysis-controller.js"
 import { OverlayRenderer } from "../modules/detection/overlay-renderer.js";
 import { TrackManager } from "../modules/tracking/track-manager.js";
 import { FieldCalibration } from "../modules/field/field-calibration.js";
+import { MetricsCalculator } from "../modules/metrics/metrics-calculator.js";
 
 export class App {
   #root;
@@ -18,6 +19,7 @@ export class App {
   #overlay;
   #tracking;
   #fieldCalibration;
+  #metrics;
   #tracks = [];
 
   constructor(root) {
@@ -109,6 +111,7 @@ export class App {
     this.#analysis = new AnalysisController(this.#events, preview);
     this.#tracking = new TrackManager(this.#events);
     this.#fieldCalibration = new FieldCalibration(this.#events, this.#root.querySelector("#field-overlay"), preview);
+    this.#metrics = new MetricsCalculator(this.#events);
     this.#camera.refreshDevices().then((devices) => {
       select.innerHTML = devices.length ? devices.map((device, index) => `<option value="${device.deviceId}">${device.label || `Cámara ${index + 1}`}</option>`).join("") : "<option>No se encontraron cámaras</option>";
       select.disabled = !devices.length;

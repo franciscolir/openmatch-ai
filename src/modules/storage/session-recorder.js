@@ -86,7 +86,17 @@ export class SessionRecorder {
     };
     session.insights = generateInsights(session);
     this.#current = null;
-    await this.#store.saveSession(session);
+    try {
+      await this.#store.saveSession(session);
+    } catch (error) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      try {
+        await this.#store.saveSession(session);
+      } catch (retryError) {
+        this.#events.emit("analysis.error", { message: `No se pudo guardar la sesión: ${retryError?.message || retryError}` });
+        return;
+      }
+    }
     this.#events.emit("session.saved", session);
   }
 }

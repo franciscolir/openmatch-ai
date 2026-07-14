@@ -20,8 +20,10 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(caches.match(event.request).then(async (cached) => {
     if (cached) return cached;
     const response = await fetch(event.request);
-    if (response.ok && event.request.url.startsWith(self.location.origin)) {
-      caches.open(CACHE_NAME).then((cache) => cache.put(event.request, response.clone()));
+    const cloned = response.clone();
+    const cacheable = response.ok && !event.request.headers.has("Range") && event.request.url.startsWith(self.location.origin);
+    if (cacheable) {
+      caches.open(CACHE_NAME).then((cache) => cache.put(event.request, cloned).catch(() => {})).catch(() => {});
     }
     return response;
   }));

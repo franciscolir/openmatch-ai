@@ -11,6 +11,7 @@ export class AnalysisController {
   #mode = "balanced";
   #droppedFrames = 0;
   #frameCanvas;
+  #captureFailures = 0;
 
   constructor(events, video) {
     this.#events = events;
@@ -100,9 +101,16 @@ export class AnalysisController {
     this.#lastFrameAt = timestamp;
     this.#createFrame().then(({ frame, width, height }) => {
       if (!this.#running) { frame.close(); return; }
+      this.#captureFailures = 0;
       this.#worker.postMessage({ type: "frame", frame, timestamp, width, height }, [frame]);
     }).catch(() => {
       this.#busy = false;
+      this.#captureFailures += 1;
+      if (this.#captureFailures > 10) {
+        this.#events.emit("analysis.error", { message: "Demasiados fallos consecutivos al capturar frames. Análisis detenido." });
+        this.stop();
+        return;
+      }
       this.#events.emit("analysis.error", { message: "No se pudo preparar un frame de video." });
       this.#schedule();
     });

@@ -15,9 +15,10 @@ let mode;
 
 async function initialize(settings) {
   mode = settings;
-  const vision = await FilesetResolver.forVisionTasks("/wasm");
-  const detectorModel = "/models/efficientdet_lite0.tflite";
-  const poseModel = "/models/pose_landmarker_lite.task";
+  const base = import.meta.env.BASE_URL || "/";
+  const vision = await FilesetResolver.forVisionTasks(base + "wasm");
+  const detectorModel = base + "models/efficientdet_lite0.tflite";
+  const poseModel = base + "models/pose_landmarker_lite.task";
   detector = await ObjectDetector.createFromOptions(vision, {
     baseOptions: { modelAssetPath: detectorModel },
     runningMode: "VIDEO",

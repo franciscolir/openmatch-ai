@@ -1,10 +1,8 @@
 const CACHE_NAME = "openmatch-ai-v4";
-const APP_SHELL = [
-  "./"
-];
+const PREFIX = self.location.pathname.replace(/\/service-worker\.js$/, "") || "/";
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll([PREFIX + "/"])));
   self.skipWaiting();
 });
 
@@ -18,10 +16,11 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   const url = new URL(event.request.url);
-  const isNavigation = event.request.mode === "navigate" || url.pathname === "/" || url.pathname.endsWith("/");
+  const path = url.pathname.replace(/\/$/, "");
+  const isNavigation = event.request.mode === "navigate" || path === PREFIX || (PREFIX === "/" && path === "");
   if (isNavigation) {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match(event.request)).then((response) => response || caches.match("./"))
+      fetch(event.request).catch(() => caches.match(event.request)).then((response) => response || caches.match(PREFIX + "/"))
     );
     return;
   }

@@ -1,4 +1,4 @@
-const CACHE_NAME = "openmatch-ai-v3";
+const CACHE_NAME = "openmatch-ai-v4";
 const APP_SHELL = [
   "./"
 ];
@@ -17,6 +17,14 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
+  const url = new URL(event.request.url);
+  const isNavigation = event.request.mode === "navigate" || url.pathname === "/" || url.pathname.endsWith("/");
+  if (isNavigation) {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request)).then((response) => response || caches.match("./"))
+    );
+    return;
+  }
   event.respondWith(caches.match(event.request).then(async (cached) => {
     if (cached) return cached;
     const response = await fetch(event.request);

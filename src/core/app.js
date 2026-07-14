@@ -317,6 +317,13 @@ export class App {
 
   async #registerServiceWorker() {
     const state = this.#root.querySelector("#pwa-state");
+    if (import.meta.env.DEV) {
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.getRegistrations().then((registrations) => registrations.forEach((registration) => registration.unregister())).catch(() => {});
+      }
+      state.textContent = "Modo offline solo en compilación de producción";
+      return;
+    }
     if (!("serviceWorker" in navigator)) { state.textContent = "Tu navegador no admite modo offline"; return; }
     try { await navigator.serviceWorker.register("./service-worker.js"); state.textContent = "Preparado para uso offline"; }
     catch { state.textContent = "Modo offline no disponible en este origen"; }

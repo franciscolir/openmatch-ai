@@ -99,7 +99,6 @@ export class AnalysisController {
     this.#lastFrameAt = timestamp;
     this.#createFrame().then(({ frame, width, height }) => {
       if (!this.#running) { frame.close(); return; }
-      this.#events.emit("camera.frame", { timestamp, width, height });
       this.#worker.postMessage({ type: "frame", frame, timestamp, width, height }, [frame]);
     }).catch(() => {
       this.#busy = false;

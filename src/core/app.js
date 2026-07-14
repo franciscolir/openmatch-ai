@@ -63,7 +63,7 @@ export class App {
     const profile = await getDeviceProfile();
     const recommendedMode = this.#root.querySelector(`[data-mode="${profile.recommendedMode}"]`);
     if (recommendedMode) {
-      this.#root.querySelector(".mode.active").classList.remove("active");
+      this.#root.querySelector(".mode.active")?.classList.remove("active");
       recommendedMode.classList.add("active");
     }
     this.#events.emit("device.ready", profile);
@@ -159,7 +159,7 @@ export class App {
     this.#heatmap = new Heatmap(this.#events, this.#root.querySelector("#heatmap-field"));
     const stage = this.#root.querySelector("#tactical-stage");
     this.#root.querySelectorAll(".view-toggle .view").forEach((button) => button.addEventListener("click", () => {
-      this.#root.querySelector(".view-toggle .view.active").classList.remove("active");
+      this.#root.querySelector(".view-toggle .view.active")?.classList.remove("active");
       button.classList.add("active");
       const showHeatmap = button.dataset.view === "heatmap";
       stage.classList.toggle("show-heatmap", showHeatmap);
@@ -281,7 +281,7 @@ export class App {
       this.#fieldCalibration.start(dimensions);
     });
     this.#root.querySelectorAll(".mode").forEach((button) => button.addEventListener("click", () => {
-      this.#root.querySelector(".mode.active").classList.remove("active");
+      this.#root.querySelector(".mode.active")?.classList.remove("active");
       button.classList.add("active");
       this.#events.emit("settings.modeChanged", { mode: button.dataset.mode });
       if (this.#analysis.isRunning) {
@@ -290,7 +290,7 @@ export class App {
       }
     }));
     this.#root.querySelectorAll(".source").forEach((button) => button.addEventListener("click", () => {
-      this.#root.querySelector(".source.active").classList.remove("active");
+      this.#root.querySelector(".source.active")?.classList.remove("active");
       button.classList.add("active");
       const useFile = button.dataset.source === "file";
       cameraControls.hidden = useFile;
@@ -318,14 +318,16 @@ export class App {
     try {
       const mode = await this.#store.loadSetting("mode");
       if (mode && this.#root.querySelector(`[data-mode="${mode}"]`)) {
-        this.#root.querySelector(".mode.active").classList.remove("active");
+        this.#root.querySelector(".mode.active")?.classList.remove("active");
         this.#root.querySelector(`[data-mode="${mode}"]`).classList.add("active");
         this.#events.emit("settings.modeChanged", { mode });
       }
       const field = await this.#store.loadSetting("field");
       if (field) {
-        this.#root.querySelector("#field-length").value = field.length;
-        this.#root.querySelector("#field-width").value = field.width;
+        const lengthEl = this.#root.querySelector("#field-length");
+        const widthEl = this.#root.querySelector("#field-width");
+        if (lengthEl) lengthEl.value = field.length;
+        if (widthEl) widthEl.value = field.width;
       }
     } catch { }
   }

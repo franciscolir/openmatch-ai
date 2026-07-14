@@ -11,6 +11,12 @@
 .dot.team-a { background:#3da5ff; }
 .dot.team-b { background:#ff6b6b; }
 .dot.ball { background:#f5c518; }
+.session-list { list-style:none; margin:14px 0 0; padding:0; display:grid; gap:10px; }
+.session-list li { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:10px 0; border-top:1px solid var(--line); }
+.session-list strong { display:block; font-size:.72rem; }
+.session-list span { color:var(--muted); font-size:.68rem; }
+.session-list .link { background:none; border:0; color:var(--muted); font-size:.68rem; text-decoration:underline; }
+.empty { color:var(--muted); font-size:.74rem; margin-top:12px; }
 .heading-actions { display:flex; align-items:center; gap:10px; }
 .view-toggle { display:flex; border:1px solid var(--line); border-radius:7px; overflow:hidden; }
 .view-toggle .view { border:0; background:transparent; color:var(--muted); font-size:.68rem; padding:6px 10px; }

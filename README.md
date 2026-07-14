@@ -34,4 +34,10 @@ La inferencia usa MediaPipe Tasks Vision encapsulado en un worker y publica resu
 
 Pulsa **Calibrar cancha** y marca cuatro esquinas en este orden: superior izquierda, superior derecha, inferior derecha e inferior izquierda. Ajusta el largo y ancho reales antes de calibrar. La proyección de cada track usa el centro inferior de su caja como contacto estimado con el césped, y solo se reporta `fieldPosition` cuando cae dentro de los límites de la cancha.
 
-Métricas, cancha táctica, mapas de calor e IndexedDB permanecen para las fases siguientes.
+## Métricas y visualización (Fase 4)
+
+El módulo de métricas acumula distancia, velocidad y posición media por jugador a partir de `tracking.updated`, etiquetando cada estimación con `confidence` (score de detección en cancha) y `quality` (`high` ≥0.7, `medium` ≥0.5, `low`). La vista táctica dibuja el esqueleto de la cancha a escala y proyecta los tracks (Equipo A/B por mitad de cancha, balón en ámbar); el mapa de calor acumula posiciones en una rejilla y las colorea por densidad. El dashboard muestra distancia total, velocidad máxima y posesión aproximada (equipo más cercano al balón por frame).
+
+## Persistencia (Fase 5)
+
+Cada sesión de análisis se guarda en IndexedDB (`openmatch-ai`) con resumen de modo, dimensiones de cancha, duración, distancia, velocidad máxima y posesión. El panel de historial lista las sesiones y permite eliminarlas. El modo y las dimensiones de cancha se restauran al recargar.

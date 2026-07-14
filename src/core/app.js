@@ -10,6 +10,9 @@ import { FieldCalibration } from "../modules/field/field-calibration.js";
 import { TacticalField } from "../modules/field/tactical-field.js";
 import { Heatmap } from "../modules/metrics/heatmap.js";
 import { MetricsCalculator } from "../modules/metrics/metrics-calculator.js";
+import { SessionStore, IndexedDBBackend } from "../modules/storage/session-store.js";
+import { SessionRecorder } from "../modules/storage/session-recorder.js";
+import { HistoryPanel } from "../modules/storage/history-panel.js";
 
 export class App {
   #root;
@@ -24,6 +27,9 @@ export class App {
   #metrics;
   #tactical;
   #heatmap;
+  #store;
+  #recorder;
+  #history;
   #tracks = [];
 
   constructor(root) {
@@ -33,6 +39,9 @@ export class App {
   async start() {
     this.#render();
     this.#dashboard = new Dashboard(this.#root, this.#events);
+    this.#store = new SessionStore(new IndexedDBBackend());
+    this.#recorder = new SessionRecorder(this.#events, this.#store);
+    this.#history = new HistoryPanel(this.#root, this.#events, this.#store);
     this.#bindControls();
     const profile = await getDeviceProfile();
     const recommendedMode = this.#root.querySelector(`[data-mode="${profile.recommendedMode}"]`);
@@ -42,6 +51,7 @@ export class App {
     }
     this.#events.emit("device.ready", profile);
     this.#events.emit("settings.modeChanged", { mode: profile.recommendedMode });
+    this.#restoreSettings();
     this.#registerServiceWorker();
   }
 
@@ -105,7 +115,7 @@ export class App {
             <span><i class="dot ball"></i>Balon</span>
           </div>
         </section>
-        <aside class="sidebar"><div id="dashboard"></div></aside>
+        <aside class="sidebar"><div id="dashboard"></div><div id="history"></div></aside>
       </main>
       <footer>OpenMatch AI · MVP local-first · <span id="pwa-state">Comprobando modo offline…</span></footer>`;
   }
@@ -220,6 +230,8 @@ export class App {
     this.#events.on("field.calibrationError", (event) => {
       this.#root.querySelector("#camera-message").textContent = event.detail.message;
     });
+    this.#events.on("settings.modeChanged", (event) => { this.#store.saveSetting("mode", event.detail.mode).catch(() => {}); });
+    this.#events.on("field.calibrated", (event) => { this.#store.saveSetting("field", event.detail.dimensions).catch(() => {}); });
     analysisToggle.addEventListener("click", async () => {
       if (this.#analysis.isRunning) {
         this.#analysis.stop();
@@ -276,6 +288,22 @@ export class App {
         fieldToggle.disabled = true;
       }
     }));
+  }
+
+  async #restoreSettings() {
+    try {
+      const mode = await this.#store.loadSetting("mode");
+      if (mode && this.#root.querySelector(`[data-mode="${mode}"]`)) {
+        this.#root.querySelector(".mode.active").classList.remove("active");
+        this.#root.querySelector(`[data-mode="${mode}"]`).classList.add("active");
+        this.#events.emit("settings.modeChanged", { mode });
+      }
+      const field = await this.#store.loadSetting("field");
+      if (field) {
+        this.#root.querySelector("#field-length").value = field.length;
+        this.#root.querySelector("#field-width").value = field.width;
+      }
+    } catch { }
   }
 
   async #registerServiceWorker() {

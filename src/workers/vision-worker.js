@@ -83,6 +83,7 @@ self.onmessage = async ({ data }) => {
     });
   } catch (error) {
     data.frame?.close();
+    console.error("Vision worker frame error:", error);
     self.postMessage({ type: "error", stage: data.type, message: "No se pudo analizar el frame localmente.", detail: String(error?.message || error) });
   }
 };

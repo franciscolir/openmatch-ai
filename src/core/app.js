@@ -230,7 +230,8 @@ export class App {
     this.#unsubscribers.push(this.#events.on("analysis.stopped", () => { analysisToggle.textContent = "Iniciar análisis"; }));
     this.#unsubscribers.push(this.#events.on("analysis.error", (event) => {
       analysisToggle.textContent = "Iniciar análisis";
-      this.#root.querySelector("#camera-message").textContent = event.detail.message;
+      const detail = event.detail.detail ? ` (${event.detail.detail})` : "";
+      this.#root.querySelector("#camera-message").textContent = `${event.detail.message}${detail}`;
     }));
     this.#unsubscribers.push(this.#events.on("tracking.updated", (event) => { this.#tracks = event.detail.tracks; }));
     this.#unsubscribers.push(this.#events.on("ai.detected", (event) => this.#overlay.render(event.detail, this.#tracks)));

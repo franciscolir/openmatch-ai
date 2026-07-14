@@ -40,6 +40,7 @@ export class AnalysisController {
     this.#worker.onmessageerror = () => {
       this.#events.emit("analysis.error", { message: "El worker de visión recibió un mensaje ilegible." });
     };
+    this.#events.emit("analysis.loading", { stage: "modelo", message: "Cargando modelo de visión…" });
     this.#worker.postMessage({ type: "initialize", mode: getAnalysisMode(mode) });
     this.#running = true;
   }

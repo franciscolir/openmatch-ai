@@ -218,8 +218,13 @@ export class App {
     this.#unsubscribers.push(this.#events.on("video.error", (event) => {
       this.#root.querySelector("#camera-message").textContent = event.detail.message;
     }));
+    this.#unsubscribers.push(this.#events.on("analysis.loading", (event) => {
+      analysisToggle.textContent = "Cargando…";
+      this.#root.querySelector("#camera-message").textContent = event.detail.message;
+    }));
     this.#unsubscribers.push(this.#events.on("analysis.ready", () => {
       analysisToggle.textContent = "Detener análisis";
+      analysisToggle.disabled = false;
       this.#root.querySelector("#camera-message").textContent = "Análisis local activo: personas, balón y pose se procesan en este dispositivo.";
     }));
     this.#unsubscribers.push(this.#events.on("analysis.stopped", () => { analysisToggle.textContent = "Iniciar análisis"; }));

@@ -33,7 +33,7 @@ export class SessionRecorder {
   }
 
   #start(mode) {
-    this.#current = { id: `session-${Date.now()}`, startedAt: Date.now(), mode, field: null };
+    this.#current = { id: `session-${crypto.randomUUID()}`, startedAt: Date.now(), mode, field: null };
     this.#maxSpeed = 0;
     this.#distance = 0;
     this.#possession = { a: 0, b: 0 };

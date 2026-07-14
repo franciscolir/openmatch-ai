@@ -45,6 +45,12 @@ export class App {
       if (message) message.textContent = "Sirve la app por http (npm run dev o npm run preview). Abrir el archivo directamente bloquea el worker de visión y la cámara.";
       return;
     }
+    if (!import.meta.env) {
+      this.#render();
+      const message = this.#root.querySelector("#camera-message");
+      if (message) message.textContent = "Esta app debe servirse con Vite (npm run dev, o npm run build + npm run preview). El servidor actual no procesa los módulos ni resuelve @mediapipe, por lo que el worker de visión no puede cargarse.";
+      return;
+    }
     this.#render();
     this.#dashboard = new Dashboard(this.#root, this.#events);
     this.#store = new SessionStore(new IndexedDBBackend());
@@ -317,7 +323,7 @@ export class App {
 
   async #registerServiceWorker() {
     const state = this.#root.querySelector("#pwa-state");
-    if (import.meta.env.DEV) {
+    if (!import.meta.env || import.meta.env.DEV) {
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker.getRegistrations().then((registrations) => registrations.forEach((registration) => registration.unregister())).catch(() => {});
       }

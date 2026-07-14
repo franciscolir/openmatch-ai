@@ -332,6 +332,16 @@ export class App {
   #destroy() {
     for (const unsub of this.#unsubscribers) unsub();
     this.#unsubscribers = [];
+    this.#dashboard?.destroy?.();
+    this.#tracking?.destroy?.();
+    this.#fieldCalibration?.destroy?.();
+    this.#metrics?.destroy?.();
+    this.#tactical?.destroy?.();
+    this.#heatmap?.destroy?.();
+    this.#recorder?.destroy?.();
+    this.#history?.destroy?.();
+    this.#insights?.destroy?.();
+    this.#overlay?.destroy?.();
   }
 
   async #registerServiceWorker() {

@@ -5,21 +5,27 @@ export class Dashboard {
   #fieldLength = 105;
   #possession = { a: 0, b: 0 };
   #lastPossessionTs = 0;
+  #unsubscribers = [];
   constructor(root, events) {
     this.#root = root.querySelector("#dashboard");
     this.#render();
-    events.on("device.ready", (event) => this.#updateDevice(event.detail));
-    events.on("camera.ready", (event) => this.#updateCamera(event.detail.settings));
-    events.on("video.loaded", (event) => this.#updateCamera(event.detail.settings));
-    events.on("camera.stopped", () => this.#resetCapture());
-    events.on("analysis.ready", (event) => this.#setAnalysis(`Activo · ${event.detail.mode}`));
-    events.on("analysis.stopped", () => { this.#setAnalysis("En espera"); this.#resetMetrics(); });
-    events.on("analysis.error", () => this.#setAnalysis("Error"));
-    events.on("ai.detected", (event) => this.#updateVision(event.detail));
-    events.on("tracking.updated", (event) => { this.#updateTracking(event.detail); this.#updatePossession(event.detail); });
-    events.on("metrics.updated", (event) => this.#updateMetrics(event.detail));
-    events.on("field.calibrated", (event) => { this.#fieldLength = event.detail.dimensions.length; this.#setField(`${event.detail.dimensions.length} x ${event.detail.dimensions.width} m`); });
-    events.on("field.calibrationStarted", () => { this.#setField("En calibracion"); this.#resetMetrics(); });
+    this.#unsubscribers.push(events.on("device.ready", (event) => this.#updateDevice(event.detail)));
+    this.#unsubscribers.push(events.on("camera.ready", (event) => this.#updateCamera(event.detail.settings)));
+    this.#unsubscribers.push(events.on("video.loaded", (event) => this.#updateCamera(event.detail.settings)));
+    this.#unsubscribers.push(events.on("camera.stopped", () => this.#resetCapture()));
+    this.#unsubscribers.push(events.on("analysis.ready", (event) => this.#setAnalysis(`Activo · ${event.detail.mode}`)));
+    this.#unsubscribers.push(events.on("analysis.stopped", () => { this.#setAnalysis("En espera"); this.#resetMetrics(); }));
+    this.#unsubscribers.push(events.on("analysis.error", () => this.#setAnalysis("Error")));
+    this.#unsubscribers.push(events.on("ai.detected", (event) => this.#updateVision(event.detail)));
+    this.#unsubscribers.push(events.on("tracking.updated", (event) => { this.#updateTracking(event.detail); this.#updatePossession(event.detail); }));
+    this.#unsubscribers.push(events.on("metrics.updated", (event) => this.#updateMetrics(event.detail)));
+    this.#unsubscribers.push(events.on("field.calibrated", (event) => { this.#fieldLength = event.detail.dimensions.length; this.#setField(`${event.detail.dimensions.length} x ${event.detail.dimensions.width} m`); }));
+    this.#unsubscribers.push(events.on("field.calibrationStarted", () => { this.#setField("En calibracion"); this.#resetMetrics(); }));
+  }
+
+  destroy() {
+    for (const unsub of this.#unsubscribers) unsub();
+    this.#unsubscribers = [];
   }
   #render() {
     this.#root.innerHTML = `<section class="dashboard panel"><p class="eyebrow">AUTODIAGNÓSTICO</p><h2>Estado del dispositivo</h2><dl><div><dt>Motor IA</dt><dd id="engine">Detectando…</dd></div><div><dt>Procesadores</dt><dd id="cores">Detectando…</dd></div><div><dt>Memoria</dt><dd id="memory">No disponible</dd></div><div><dt>Batería</dt><dd id="battery">No disponible</dd></div></dl></section><section class="dashboard panel metrics"><p class="eyebrow">CAPTURA</p><h2>Telemetría</h2><dl><div><dt>Resolución</dt><dd id="resolution">—</dd></div><div><dt>FPS objetivo</dt><dd id="fps">—</dd></div><div><dt>Visión</dt><dd id="analysis">En espera</dd></div><div><dt>Tracks</dt><dd id="tracks">—</dd></div><div><dt>Balón</dt><dd id="ball">—</dd></div><div><dt>Cancha</dt><dd id="field">Sin calibrar</dd></div><div><dt>Inferencia</dt><dd id="inference">—</dd></div><div><dt>Distancia</dt><dd id="distance">—</dd></div><div><dt>Vel. máx</dt><dd id="speed">—</dd></div><div><dt>Posesión A/B</dt><dd id="possession">—</dd></div></dl></section>`;

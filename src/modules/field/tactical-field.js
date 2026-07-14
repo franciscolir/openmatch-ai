@@ -10,29 +10,38 @@ export class TacticalField {
   #ctx;
   #dimensions = { length: 105, width: 68 };
   #tracks = [];
+  #unsubscribers = [];
+  #onResize;
 
   constructor(events, canvas) {
     this.#events = events;
     this.#canvas = canvas;
     this.#ctx = canvas.getContext("2d");
-    events.on("field.calibrated", (event) => {
+    this.#unsubscribers.push(events.on("field.calibrated", (event) => {
       this.#dimensions = event.detail.dimensions;
       this.#resize();
-    });
-    events.on("tracking.updated", (event) => {
+    }));
+    this.#unsubscribers.push(events.on("tracking.updated", (event) => {
       this.#tracks = event.detail.tracks;
       this.#render();
-    });
-    events.on("field.calibrationStarted", () => {
+    }));
+    this.#unsubscribers.push(events.on("field.calibrationStarted", () => {
       this.#tracks = [];
       this.#render();
-    });
-    events.on("analysis.stopped", () => {
+    }));
+    this.#unsubscribers.push(events.on("analysis.stopped", () => {
       this.#tracks = [];
       this.#render();
-    });
+    }));
     this.#resize();
-    window.addEventListener("resize", () => this.#resize());
+    this.#onResize = () => this.#resize();
+    window.addEventListener("resize", this.#onResize);
+  }
+
+  destroy() {
+    for (const unsub of this.#unsubscribers) unsub();
+    this.#unsubscribers = [];
+    if (this.#onResize) window.removeEventListener("resize", this.#onResize);
   }
 
   refresh() {

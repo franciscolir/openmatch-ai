@@ -12,6 +12,8 @@ export class FieldCalibration {
   #active = false;
   #resizeObserver;
   #dimensions;
+  #onClick;
+  #unsubscribers = [];
 
   constructor(events, canvas, video) {
     this.#events = events;
@@ -20,7 +22,15 @@ export class FieldCalibration {
     this.#video = video;
     this.#resizeObserver = new ResizeObserver(() => this.#draw());
     this.#resizeObserver.observe(video);
-    canvas.addEventListener("click", (event) => this.#addPoint(event));
+    this.#onClick = (event) => this.#addPoint(event);
+    canvas.addEventListener("click", this.#onClick);
+  }
+
+  destroy() {
+    this.#resizeObserver.disconnect();
+    this.#canvas.removeEventListener("click", this.#onClick);
+    for (const unsub of this.#unsubscribers) unsub();
+    this.#unsubscribers = [];
   }
 
   get isActive() { return this.#active; }

@@ -12,18 +12,24 @@ export class SessionRecorder {
   #distance = 0;
   #teamDistance = { a: 0, b: 0 };
   #lastPositions = new Map();
+  #unsubscribers = [];
 
   constructor(events, store) {
     this.#events = events;
     this.#store = store;
-    events.on("analysis.ready", (event) => this.#start(event.detail.mode));
-    events.on("field.calibrated", (event) => {
+    this.#unsubscribers.push(events.on("analysis.ready", (event) => this.#start(event.detail.mode)));
+    this.#unsubscribers.push(events.on("field.calibrated", (event) => {
       this.#fieldLength = event.detail.dimensions.length;
       if (this.#current) this.#current.field = event.detail.dimensions;
-    });
-    events.on("metrics.updated", (event) => this.#updateMetrics(event.detail));
-    events.on("tracking.updated", (event) => { this.#updatePossession(event.detail); this.#updateTeamDistance(event.detail.tracks); });
-    events.on("analysis.stopped", () => this.#stop());
+    }));
+    this.#unsubscribers.push(events.on("metrics.updated", (event) => this.#updateMetrics(event.detail)));
+    this.#unsubscribers.push(events.on("tracking.updated", (event) => { this.#updatePossession(event.detail); this.#updateTeamDistance(event.detail.tracks); }));
+    this.#unsubscribers.push(events.on("analysis.stopped", () => this.#stop()));
+  }
+
+  destroy() {
+    for (const unsub of this.#unsubscribers) unsub();
+    this.#unsubscribers = [];
   }
 
   #start(mode) {

@@ -11,19 +11,25 @@ export class TrackManager {
   #nextId = 1;
   #homography;
   #dimensions;
+  #unsubscribers = [];
 
   constructor(events) {
     this.#events = events;
-    events.on("ai.detected", (event) => this.#update(event.detail));
-    events.on("field.calibrated", (event) => {
+    this.#unsubscribers.push(events.on("ai.detected", (event) => this.#update(event.detail)));
+    this.#unsubscribers.push(events.on("field.calibrated", (event) => {
       this.#homography = event.detail.homography;
       this.#dimensions = event.detail.dimensions;
-    });
-    events.on("field.calibrationStarted", () => {
+    }));
+    this.#unsubscribers.push(events.on("field.calibrationStarted", () => {
       this.#homography = undefined;
       this.#dimensions = undefined;
-    });
-    events.on("analysis.stopped", () => this.#reset());
+    }));
+    this.#unsubscribers.push(events.on("analysis.stopped", () => this.#reset()));
+  }
+
+  destroy() {
+    for (const unsub of this.#unsubscribers) unsub();
+    this.#unsubscribers = [];
   }
 
   #update(result) {

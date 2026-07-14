@@ -22,21 +22,30 @@ export class Heatmap {
   #grid = [];
   #max = 0;
   #totalPoints = 0;
+  #unsubscribers = [];
+  #onResize;
 
   constructor(events, canvas) {
     this.#events = events;
     this.#canvas = canvas;
     this.#ctx = canvas.getContext("2d");
     this.#resetGrid();
-    events.on("field.calibrated", (event) => {
+    this.#unsubscribers.push(events.on("field.calibrated", (event) => {
       this.#dimensions = event.detail.dimensions;
       this.#resize();
-    });
-    events.on("tracking.updated", (event) => this.#accumulate(event.detail));
-    events.on("field.calibrationStarted", () => { this.#resetGrid(); this.#render(); });
-    events.on("analysis.stopped", () => { this.#resetGrid(); this.#render(); });
+    }));
+    this.#unsubscribers.push(events.on("tracking.updated", (event) => this.#accumulate(event.detail)));
+    this.#unsubscribers.push(events.on("field.calibrationStarted", () => { this.#resetGrid(); this.#render(); }));
+    this.#unsubscribers.push(events.on("analysis.stopped", () => { this.#resetGrid(); this.#render(); }));
     this.#resize();
-    window.addEventListener("resize", () => this.#resize());
+    this.#onResize = () => this.#resize();
+    window.addEventListener("resize", this.#onResize);
+  }
+
+  destroy() {
+    for (const unsub of this.#unsubscribers) unsub();
+    this.#unsubscribers = [];
+    if (this.#onResize) window.removeEventListener("resize", this.#onResize);
   }
 
   refresh() {

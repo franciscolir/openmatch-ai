@@ -2,12 +2,18 @@ export class InsightPanel {
   #events;
   #store;
   #root;
+  #unsubscribers = [];
   constructor(root, events, store) {
     this.#root = root.querySelector("#insights");
     this.#events = events;
     this.#store = store;
-    events.on("session.saved", (event) => this.#render(event.detail));
+    this.#unsubscribers.push(events.on("session.saved", (event) => this.#render(event.detail)));
     this.#renderLatest();
+  }
+
+  destroy() {
+    for (const unsub of this.#unsubscribers) unsub();
+    this.#unsubscribers = [];
   }
 
   async #renderLatest() {

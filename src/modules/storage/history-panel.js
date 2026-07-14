@@ -2,12 +2,18 @@ export class HistoryPanel {
   #events;
   #store;
   #root;
+  #unsubscribers = [];
   constructor(root, events, store) {
     this.#root = root.querySelector("#history");
     this.#events = events;
     this.#store = store;
-    events.on("session.saved", () => this.#render());
+    this.#unsubscribers.push(events.on("session.saved", () => this.#render()));
     this.#render();
+  }
+
+  destroy() {
+    for (const unsub of this.#unsubscribers) unsub();
+    this.#unsubscribers = [];
   }
 
   async #render() {

@@ -17,12 +17,18 @@ export function qualityFromScore(score) {
 export class MetricsCalculator {
   #events;
   #history = new Map();
+  #unsubscribers = [];
 
   constructor(events) {
     this.#events = events;
-    events.on("tracking.updated", (event) => this.#update(event.detail));
-    events.on("analysis.stopped", () => this.#reset());
-    events.on("field.calibrationStarted", () => this.#reset());
+    this.#unsubscribers.push(events.on("tracking.updated", (event) => this.#update(event.detail)));
+    this.#unsubscribers.push(events.on("analysis.stopped", () => this.#reset()));
+    this.#unsubscribers.push(events.on("field.calibrationStarted", () => this.#reset()));
+  }
+
+  destroy() {
+    for (const unsub of this.#unsubscribers) unsub();
+    this.#unsubscribers = [];
   }
 
   #update(result) {

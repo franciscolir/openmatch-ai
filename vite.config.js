@@ -39,7 +39,17 @@ function serveStaticAssets() {
     configureServer(server) {
       server.middlewares.use("/wasm", async (req, res, next) => {
         const filename = req.url.split("?")[0].replace(/^\//, "");
-        if (!filename.endsWith(".js")) {
+        const hasImport = req.url.includes("?import");
+        if (filename.endsWith(".js") && !hasImport) {
+          try {
+            const content = await injectWasmLoader(filename);
+            res.setHeader("Content-Type", "text/javascript");
+            res.statusCode = 200;
+            res.end(content);
+            return;
+          } catch {
+          }
+        } else if (!filename.endsWith(".js")) {
           try {
             const filePath = resolve(wasmRoot, filename);
             const content = await readFile(filePath);

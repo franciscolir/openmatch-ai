@@ -7,6 +7,7 @@ import { AnalysisController } from "../modules/detection/analysis-controller.js"
 import { OverlayRenderer } from "../modules/detection/overlay-renderer.js";
 import { TrackManager } from "../modules/tracking/track-manager.js";
 import { FieldCalibration } from "../modules/field/field-calibration.js";
+import { TacticalField } from "../modules/field/tactical-field.js";
 import { MetricsCalculator } from "../modules/metrics/metrics-calculator.js";
 
 export class App {
@@ -20,6 +21,7 @@ export class App {
   #tracking;
   #fieldCalibration;
   #metrics;
+  #tactical;
   #tracks = [];
 
   constructor(root) {
@@ -89,6 +91,17 @@ export class App {
           </div>
           <p id="camera-message" class="message" aria-live="polite">Permite el acceso a la cámara para empezar.</p>
         </section>
+        <section class="tactical panel">
+          <div class="section-heading"><div><p class="eyebrow">VISTA TACTICA</p><h2>Cancha en vivo</h2></div><span id="field-status" class="status">Sin calibrar</span></div>
+          <div class="tactical-stage">
+            <canvas id="tactical-field" aria-label="Proyeccion tactica de jugadores y balon"></canvas>
+          </div>
+          <div class="tactical-legend">
+            <span><i class="dot team-a"></i>Equipo A</span>
+            <span><i class="dot team-b"></i>Equipo B</span>
+            <span><i class="dot ball"></i>Balon</span>
+          </div>
+        </section>
         <aside class="sidebar"><div id="dashboard"></div></aside>
       </main>
       <footer>OpenMatch AI · MVP local-first · <span id="pwa-state">Comprobando modo offline…</span></footer>`;
@@ -112,6 +125,7 @@ export class App {
     this.#tracking = new TrackManager(this.#events);
     this.#fieldCalibration = new FieldCalibration(this.#events, this.#root.querySelector("#field-overlay"), preview);
     this.#metrics = new MetricsCalculator(this.#events);
+    this.#tactical = new TacticalField(this.#events, this.#root.querySelector("#tactical-field"));
     this.#camera.refreshDevices().then((devices) => {
       select.innerHTML = devices.length ? devices.map((device, index) => `<option value="${device.deviceId}">${device.label || `Cámara ${index + 1}`}</option>`).join("") : "<option>No se encontraron cámaras</option>";
       select.disabled = !devices.length;
@@ -179,6 +193,8 @@ export class App {
     this.#events.on("field.calibrationStarted", (event) => {
       fieldToggle.textContent = "Cancelar calibración";
       this.#root.querySelector("#camera-message").textContent = event.detail.message;
+      this.#root.querySelector("#field-status").textContent = "Calibrando…";
+      this.#root.querySelector("#field-status").classList.remove("live");
     });
     this.#events.on("field.calibrationProgress", (event) => {
       this.#root.querySelector("#camera-message").textContent = event.detail.message;
@@ -186,6 +202,8 @@ export class App {
     this.#events.on("field.calibrated", (event) => {
       fieldToggle.textContent = "Recalibrar cancha";
       this.#root.querySelector("#camera-message").textContent = `Cancha calibrada: ${event.detail.dimensions.length} x ${event.detail.dimensions.width} m.`;
+      this.#root.querySelector("#field-status").textContent = `Calibrada ${event.detail.dimensions.length}x${event.detail.dimensions.width} m`;
+      this.#root.querySelector("#field-status").classList.add("live");
     });
     this.#events.on("field.calibrationError", (event) => {
       this.#root.querySelector("#camera-message").textContent = event.detail.message;

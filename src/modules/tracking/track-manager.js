@@ -104,7 +104,6 @@ export class TrackManager {
 
   #reset() {
     this.#tracks.clear();
-    this.#nextId = 1;
   }
 }
 

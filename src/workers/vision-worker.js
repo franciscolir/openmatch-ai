@@ -79,7 +79,11 @@ self.onmessage = async ({ data }) => {
     });
   } catch (error) {
     data.frame?.close();
-    console.error("Vision worker frame error:", error);
-    self.postMessage({ type: "error", stage: data.type, message: "No se pudo analizar el frame localmente.", detail: String(error?.message || error) });
+    console.error("Vision worker error:", error);
+    const stage = data.type === "initialize" ? "initialize" : "frame";
+    const message = stage === "initialize"
+      ? "No se pudo inicializar el modelo de visión."
+      : "No se pudo analizar el frame localmente.";
+    self.postMessage({ type: "error", stage, message, detail: String(error?.message || error) });
   }
 };

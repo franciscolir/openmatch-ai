@@ -5,6 +5,9 @@ export const ANALYSIS_MODES = {
   precision: { inferenceFps: 10, maxDimension: 960, detectionThreshold: 0.35, poseEnabled: true }
 };
 
+export const QUALITY_HIGH = 0.7;
+export const QUALITY_MEDIUM = 0.5;
+
 export function getAnalysisMode(mode) {
   return ANALYSIS_MODES[mode] || ANALYSIS_MODES.balanced;
 }

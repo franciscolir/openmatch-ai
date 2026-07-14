@@ -1,5 +1,4 @@
-const QUALITY_HIGH = 0.7;
-const QUALITY_MEDIUM = 0.5;
+import { QUALITY_HIGH, QUALITY_MEDIUM } from "../../config/analysis-config.js";
 
 export function qualityFromScore(score) {
   if (score >= QUALITY_HIGH) return "high";

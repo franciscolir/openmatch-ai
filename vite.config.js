@@ -15,6 +15,7 @@ function serveStaticAssets() {
         try {
           if (filename.endsWith(".js")) {
             let content = await readFile(filePath, "utf-8");
+            content = "var custom_dbg = function(){};\n" + content;
             content += '\nglobalThis.ModuleFactory = typeof ModuleFactory !== "undefined" ? ModuleFactory : void 0;';
             res.setHeader("Content-Type", "text/javascript");
             res.statusCode = 200;

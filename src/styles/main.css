@@ -17,6 +17,8 @@
 .session-list span { color:var(--muted); font-size:.68rem; }
 .session-list .link { background:none; border:0; color:var(--muted); font-size:.68rem; text-decoration:underline; }
 .empty { color:var(--muted); font-size:.74rem; margin-top:12px; }
+.insight-list { list-style:none; margin:14px 0 0; padding:0; display:grid; gap:10px; }
+.insight-list li { padding:10px 12px; border:1px solid var(--line); border-radius:9px; background:rgba(182,255,70,.05); font-size:.74rem; line-height:1.4; }
 .heading-actions { display:flex; align-items:center; gap:10px; }
 .view-toggle { display:flex; border:1px solid var(--line); border-radius:7px; overflow:hidden; }
 .view-toggle .view { border:0; background:transparent; color:var(--muted); font-size:.68rem; padding:6px 10px; }

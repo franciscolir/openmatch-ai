@@ -1,0 +1,22 @@
+export class InsightPanel {
+  #events;
+  #store;
+  #root;
+  constructor(root, events, store) {
+    this.#root = root.querySelector("#insights");
+    this.#events = events;
+    this.#store = store;
+    events.on("session.saved", (event) => this.#render(event.detail));
+    this.#renderLatest();
+  }
+
+  async #renderLatest() {
+    const sessions = await this.#store.listSessions();
+    if (sessions.length) this.#render(sessions[0]);
+  }
+
+  #render(session) {
+    const items = (session.insights || []).map((text) => `<li>${text}</li>`).join("");
+    this.#root.innerHTML = `<section class="dashboard panel"><p class="eyebrow">INFORME TACTICO</p><h2>Insights de la sesión</h2><ul class="insight-list">${items || '<li class="empty">Sin datos.</li>'}</ul></section>`;
+  }
+}

@@ -41,3 +41,7 @@ El módulo de métricas acumula distancia, velocidad y posición media por jugad
 ## Persistencia (Fase 5)
 
 Cada sesión de análisis se guarda en IndexedDB (`openmatch-ai`) con resumen de modo, dimensiones de cancha, duración, distancia, velocidad máxima y posesión. El panel de historial lista las sesiones y permite eliminarlas. El modo y las dimensiones de cancha se restauran al recargar.
+
+## Informe táctico (Fase 6)
+
+Sin enviar datos a ningún servicio externo, un generador de reglas locales produce insights a partir del resumen de la sesión: dominio de posesión, carga física (m/min), velocidad máxima, recorrido por equipo y una sugerencia táctica. El panel "Informe táctico" muestra los insights de la última sesión guardada.

@@ -1,3 +1,5 @@
+import { generateInsights } from "../insights/insight-generator.js";
+
 export class SessionRecorder {
   #events;
   #store;
@@ -6,6 +8,8 @@ export class SessionRecorder {
   #fieldLength = 105;
   #maxSpeed = 0;
   #distance = 0;
+  #teamDistance = { a: 0, b: 0 };
+  #lastPositions = new Map();
 
   constructor(events, store) {
     this.#events = events;
@@ -16,7 +20,7 @@ export class SessionRecorder {
       if (this.#current) this.#current.field = event.detail.dimensions;
     });
     events.on("metrics.updated", (event) => this.#updateMetrics(event.detail));
-    events.on("tracking.updated", (event) => this.#updatePossession(event.detail));
+    events.on("tracking.updated", (event) => { this.#updatePossession(event.detail); this.#updateTeamDistance(event.detail.tracks); });
     events.on("analysis.stopped", () => this.#stop());
   }
 
@@ -25,6 +29,8 @@ export class SessionRecorder {
     this.#maxSpeed = 0;
     this.#distance = 0;
     this.#possession = { a: 0, b: 0 };
+    this.#teamDistance = { a: 0, b: 0 };
+    this.#lastPositions.clear();
   }
 
   #updateMetrics(detail) {
@@ -50,6 +56,20 @@ export class SessionRecorder {
     this.#possession[distances.a <= distances.b ? "a" : "b"] += 1;
   }
 
+  #updateTeamDistance(tracks) {
+    if (!this.#current) return;
+    const mid = this.#fieldLength / 2;
+    for (const track of tracks) {
+      if (track.label !== "person" || !track.fieldPosition) continue;
+      const last = this.#lastPositions.get(track.id);
+      if (last) {
+        const delta = Math.hypot(track.fieldPosition.x - last.x, track.fieldPosition.y - last.y);
+        this.#teamDistance[last.x < mid ? "a" : "b"] += delta;
+      }
+      this.#lastPositions.set(track.id, track.fieldPosition);
+    }
+  }
+
   async #stop() {
     if (!this.#current) return;
     const total = this.#possession.a + this.#possession.b;
@@ -59,8 +79,12 @@ export class SessionRecorder {
       durationMs: Date.now() - this.#current.startedAt,
       distance: this.#distance,
       maxSpeed: this.#maxSpeed,
-      possession: total ? Math.round((this.#possession.a / total) * 100) : null
+      teamDistanceA: this.#teamDistance.a,
+      teamDistanceB: this.#teamDistance.b,
+      possession: total ? Math.round((this.#possession.a / total) * 100) : null,
+      insights: []
     };
+    session.insights = generateInsights(session);
     this.#current = null;
     await this.#store.saveSession(session);
     this.#events.emit("session.saved", session);

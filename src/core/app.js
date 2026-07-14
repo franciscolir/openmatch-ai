@@ -13,6 +13,7 @@ import { MetricsCalculator } from "../modules/metrics/metrics-calculator.js";
 import { SessionStore, IndexedDBBackend } from "../modules/storage/session-store.js";
 import { SessionRecorder } from "../modules/storage/session-recorder.js";
 import { HistoryPanel } from "../modules/storage/history-panel.js";
+import { InsightPanel } from "../modules/insights/insight-panel.js";
 
 export class App {
   #root;
@@ -30,6 +31,7 @@ export class App {
   #store;
   #recorder;
   #history;
+  #insights;
   #tracks = [];
 
   constructor(root) {
@@ -42,6 +44,7 @@ export class App {
     this.#store = new SessionStore(new IndexedDBBackend());
     this.#recorder = new SessionRecorder(this.#events, this.#store);
     this.#history = new HistoryPanel(this.#root, this.#events, this.#store);
+    this.#insights = new InsightPanel(this.#root, this.#events, this.#store);
     this.#bindControls();
     const profile = await getDeviceProfile();
     const recommendedMode = this.#root.querySelector(`[data-mode="${profile.recommendedMode}"]`);
@@ -115,7 +118,7 @@ export class App {
             <span><i class="dot ball"></i>Balon</span>
           </div>
         </section>
-        <aside class="sidebar"><div id="dashboard"></div><div id="history"></div></aside>
+        <aside class="sidebar"><div id="dashboard"></div><div id="history"></div><div id="insights"></div></aside>
       </main>
       <footer>OpenMatch AI · MVP local-first · <span id="pwa-state">Comprobando modo offline…</span></footer>`;
   }

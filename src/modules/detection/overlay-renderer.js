@@ -81,10 +81,6 @@ export class OverlayRenderer {
       this.#context.fill();
     }
   }
-
-  destroy() {
-    this.#resizeObserver.disconnect();
-  }
 }
 
 function sameBox(first, second) {

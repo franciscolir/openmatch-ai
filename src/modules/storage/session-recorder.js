@@ -1,3 +1,4 @@
+import { resolvePossessionFrame } from "../../utils/possession.js";
 import { generateInsights } from "../insights/insight-generator.js";
 
 export class SessionRecorder {
@@ -5,6 +6,7 @@ export class SessionRecorder {
   #store;
   #current = null;
   #possession = { a: 0, b: 0 };
+  #lastPossessionTs = 0;
   #fieldLength = 105;
   #maxSpeed = 0;
   #distance = 0;
@@ -29,6 +31,7 @@ export class SessionRecorder {
     this.#maxSpeed = 0;
     this.#distance = 0;
     this.#possession = { a: 0, b: 0 };
+    this.#lastPossessionTs = 0;
     this.#teamDistance = { a: 0, b: 0 };
     this.#lastPositions.clear();
   }
@@ -46,14 +49,11 @@ export class SessionRecorder {
     if (!ball) return;
     const players = detail.tracks.filter((track) => track.label === "person" && track.fieldPosition);
     if (!players.length) return;
-    const distances = { a: Infinity, b: Infinity };
-    const mid = this.#fieldLength / 2;
-    for (const player of players) {
-      const team = player.fieldPosition.x < mid ? "a" : "b";
-      const distance = Math.hypot(player.fieldPosition.x - ball.fieldPosition.x, player.fieldPosition.y - ball.fieldPosition.y);
-      if (distance < distances[team]) distances[team] = distance;
-    }
-    this.#possession[distances.a <= distances.b ? "a" : "b"] += 1;
+    const winner = resolvePossessionFrame(ball, players, this.#fieldLength);
+    if (!winner) return;
+    const dt = detail.timestamp - this.#lastPossessionTs;
+    if (dt > 0) this.#possession[winner] += dt;
+    this.#lastPossessionTs = detail.timestamp;
   }
 
   #updateTeamDistance(tracks) {

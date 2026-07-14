@@ -1,7 +1,10 @@
+import { resolvePossessionFrame } from "../../utils/possession.js";
+
 export class Dashboard {
   #root;
   #fieldLength = 105;
   #possession = { a: 0, b: 0 };
+  #lastPossessionTs = 0;
   constructor(root, events) {
     this.#root = root.querySelector("#dashboard");
     this.#render();
@@ -47,20 +50,18 @@ export class Dashboard {
     if (!ball) return;
     const players = result.tracks.filter((track) => track.label === "person" && track.fieldPosition);
     if (!players.length) return;
-    const teamDistance = { a: Infinity, b: Infinity };
-    const mid = this.#fieldLength / 2;
-    for (const player of players) {
-      const team = player.fieldPosition.x < mid ? "a" : "b";
-      const distance = Math.hypot(player.fieldPosition.x - ball.fieldPosition.x, player.fieldPosition.y - ball.fieldPosition.y);
-      if (distance < teamDistance[team]) teamDistance[team] = distance;
-    }
-    this.#possession[teamDistance.a <= teamDistance.b ? "a" : "b"] += 1;
+    const winner = resolvePossessionFrame(ball, players, this.#fieldLength);
+    if (!winner) return;
+    const dt = result.timestamp - this.#lastPossessionTs;
+    if (dt > 0) this.#possession[winner] += dt;
+    this.#lastPossessionTs = result.timestamp;
     const total = this.#possession.a + this.#possession.b;
     const pctA = total ? Math.round((this.#possession.a / total) * 100) : 0;
     this.#root.querySelector("#possession").textContent = `${pctA}% / ${100 - pctA}%`;
   }
   #resetMetrics() {
     this.#possession = { a: 0, b: 0 };
+    this.#lastPossessionTs = 0;
     this.#root.querySelector("#distance").textContent = "—";
     this.#root.querySelector("#speed").textContent = "—";
     this.#root.querySelector("#possession").textContent = "—";

@@ -2,13 +2,6 @@ import { cp, mkdir, readFile } from "node:fs/promises";
 import { dirname, extname, resolve } from "node:path";
 import { defineConfig } from "vite";
 
-const MIME_TYPES = {
-  ".js": "text/javascript",
-  ".wasm": "application/wasm",
-  ".tflite": "application/octet-stream",
-  ".task": "application/octet-stream"
-};
-
 const wasmRoot = resolve("node_modules/@mediapipe/tasks-vision/wasm");
 const modelsRoot = resolve("src/models");
 
@@ -19,10 +12,17 @@ function serveStaticAssets() {
       server.middlewares.use("/wasm", async (req, res, next) => {
         const filename = req.url.split("?")[0].replace(/^\//, "");
         const filePath = resolve(wasmRoot, filename);
-        const ext = extname(filePath);
         try {
+          if (filename.endsWith(".js")) {
+            let content = await readFile(filePath, "utf-8");
+            content += '\nglobalThis.ModuleFactory = typeof ModuleFactory !== "undefined" ? ModuleFactory : void 0;';
+            res.setHeader("Content-Type", "text/javascript");
+            res.statusCode = 200;
+            res.end(content);
+            return;
+          }
           const content = await readFile(filePath);
-          res.setHeader("Content-Type", MIME_TYPES[ext] || "application/octet-stream");
+          res.setHeader("Content-Type", "application/wasm");
           res.statusCode = 200;
           res.end(content);
         } catch {

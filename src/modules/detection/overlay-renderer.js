@@ -21,7 +21,6 @@ export class OverlayRenderer {
   }
 
   render(result, tracks = []) {
-    this.#resize();
     const { width, height } = this.#canvas;
     this.#context.clearRect(0, 0, width, height);
     if (!result) return;

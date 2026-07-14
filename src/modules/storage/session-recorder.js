@@ -90,7 +90,9 @@ export class SessionRecorder {
       possession: total ? Math.round((this.#possession.a / total) * 100) : null,
       insights: []
     };
-    session.insights = generateInsights(session);
+    try {
+      session.insights = generateInsights(session);
+    } catch { }
     this.#current = null;
     try {
       await this.#store.saveSession(session);

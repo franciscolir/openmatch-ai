@@ -66,7 +66,11 @@ self.onmessage = async ({ data }) => {
     if (data.type !== "frame" || !detector) return;
     const startedAt = performance.now();
     const detections = detector.detectForVideo(data.frame, data.timestamp);
-    const poses = poseLandmarker?.detectForVideo(data.frame, data.timestamp).landmarks.map((landmarks) => ({ landmarks })) || [];
+    let poses = [];
+    if (poseLandmarker) {
+      const poseResult = poseLandmarker.detectForVideo(data.frame, data.timestamp);
+      poses = (poseResult.landmarks || []).map((landmarks) => ({ landmarks }));
+    }
     data.frame.close();
     self.postMessage({
       type: "result",

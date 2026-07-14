@@ -23,9 +23,23 @@ export class AnalysisController {
     if (!this.#video.videoWidth || !this.#video.videoHeight) throw new Error("La fuente de video todavía no está lista.");
     this.stop();
     this.#mode = mode;
-    this.#worker = new Worker(new URL("../../workers/vision-worker.js", import.meta.url), { type: "module" });
+    try {
+      this.#worker = new Worker(new URL("../../workers/vision-worker.js", import.meta.url), { type: "module" });
+    } catch (error) {
+      this.#events.emit("analysis.error", { message: `No se pudo crear el worker de visión: ${error?.message || error}` });
+      return;
+    }
     this.#worker.onmessage = (event) => this.#handleWorkerMessage(event.data);
-    this.#worker.onerror = () => this.#events.emit("analysis.error", { message: "El worker de visión no pudo iniciarse." });
+    this.#worker.onerror = (event) => {
+      this.#running = false;
+      this.#worker?.terminate();
+      this.#worker = undefined;
+      const detail = [event.message, event.filename && `(${event.filename}:${event.lineno})`].filter(Boolean).join(" ");
+      this.#events.emit("analysis.error", { message: `El worker de visión no pudo iniciarse. ${detail}` });
+    };
+    this.#worker.onmessageerror = () => {
+      this.#events.emit("analysis.error", { message: "El worker de visión recibió un mensaje ilegible." });
+    };
     this.#worker.postMessage({ type: "initialize", mode: getAnalysisMode(mode) });
     this.#running = true;
   }

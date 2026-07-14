@@ -39,6 +39,12 @@ export class App {
   }
 
   async start() {
+    if (location.protocol === "file:") {
+      this.#render();
+      const message = this.#root.querySelector("#camera-message");
+      if (message) message.textContent = "Sirve la app por http (npm run dev o npm run preview). Abrir el archivo directamente bloquea el worker de visión y la cámara.";
+      return;
+    }
     this.#render();
     this.#dashboard = new Dashboard(this.#root, this.#events);
     this.#store = new SessionStore(new IndexedDBBackend());

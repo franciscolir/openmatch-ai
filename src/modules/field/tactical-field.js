@@ -35,6 +35,10 @@ export class TacticalField {
     window.addEventListener("resize", () => this.#resize());
   }
 
+  refresh() {
+    this.#resize();
+  }
+
   #resize() {
     const dpr = window.devicePixelRatio || 1;
     const cssWidth = this.#canvas.clientWidth || 420;

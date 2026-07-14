@@ -11,6 +11,12 @@
 .dot.team-a { background:#3da5ff; }
 .dot.team-b { background:#ff6b6b; }
 .dot.ball { background:#f5c518; }
+.heading-actions { display:flex; align-items:center; gap:10px; }
+.view-toggle { display:flex; border:1px solid var(--line); border-radius:7px; overflow:hidden; }
+.view-toggle .view { border:0; background:transparent; color:var(--muted); font-size:.68rem; padding:6px 10px; }
+.view-toggle .view.active { background:var(--accent-dark); color:var(--accent); }
+.tactical-stage.show-heatmap #tactical-field { display:none; }
+.tactical-stage:not(.show-heatmap) #heatmap-field { display:none; }
 @media (max-width:900px) { .workspace { grid-template-columns:1fr; }.sidebar { grid-column:1; grid-row:auto; display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }.dashboard { margin:0; }.topbar,.workspace,footer { padding-left:18px; padding-right:18px; } } @media (max-width:590px) { .privacy { display:none; }.hero { padding:28px 22px; }.capture { padding:16px; }.video-stage { min-height:260px; }.camera-controls { flex-wrap:wrap; }.select-wrap { min-width:42%; }.primary { width:100%; }.sidebar { grid-template-columns:1fr; } }
 
 .video-stage canvas { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }

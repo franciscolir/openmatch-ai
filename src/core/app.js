@@ -8,6 +8,7 @@ import { OverlayRenderer } from "../modules/detection/overlay-renderer.js";
 import { TrackManager } from "../modules/tracking/track-manager.js";
 import { FieldCalibration } from "../modules/field/field-calibration.js";
 import { TacticalField } from "../modules/field/tactical-field.js";
+import { Heatmap } from "../modules/metrics/heatmap.js";
 import { MetricsCalculator } from "../modules/metrics/metrics-calculator.js";
 
 export class App {
@@ -22,6 +23,7 @@ export class App {
   #fieldCalibration;
   #metrics;
   #tactical;
+  #heatmap;
   #tracks = [];
 
   constructor(root) {
@@ -92,9 +94,10 @@ export class App {
           <p id="camera-message" class="message" aria-live="polite">Permite el acceso a la cámara para empezar.</p>
         </section>
         <section class="tactical panel">
-          <div class="section-heading"><div><p class="eyebrow">VISTA TACTICA</p><h2>Cancha en vivo</h2></div><span id="field-status" class="status">Sin calibrar</span></div>
-          <div class="tactical-stage">
+          <div class="section-heading"><div><p class="eyebrow">VISTA TACTICA</p><h2>Cancha en vivo</h2></div><div class="heading-actions"><span id="field-status" class="status">Sin calibrar</span><div class="view-toggle"><button class="view active" data-view="tactical">Tactica</button><button class="view" data-view="heatmap">Calor</button></div></div></div>
+          <div id="tactical-stage" class="tactical-stage">
             <canvas id="tactical-field" aria-label="Proyeccion tactica de jugadores y balon"></canvas>
+            <canvas id="heatmap-field" aria-label="Mapa de calor de posiciones de jugadores"></canvas>
           </div>
           <div class="tactical-legend">
             <span><i class="dot team-a"></i>Equipo A</span>
@@ -126,6 +129,15 @@ export class App {
     this.#fieldCalibration = new FieldCalibration(this.#events, this.#root.querySelector("#field-overlay"), preview);
     this.#metrics = new MetricsCalculator(this.#events);
     this.#tactical = new TacticalField(this.#events, this.#root.querySelector("#tactical-field"));
+    this.#heatmap = new Heatmap(this.#events, this.#root.querySelector("#heatmap-field"));
+    const stage = this.#root.querySelector("#tactical-stage");
+    this.#root.querySelectorAll(".view-toggle .view").forEach((button) => button.addEventListener("click", () => {
+      this.#root.querySelector(".view-toggle .view.active").classList.remove("active");
+      button.classList.add("active");
+      const showHeatmap = button.dataset.view === "heatmap";
+      stage.classList.toggle("show-heatmap", showHeatmap);
+      if (showHeatmap) this.#heatmap.refresh(); else this.#tactical.refresh();
+    }));
     this.#camera.refreshDevices().then((devices) => {
       select.innerHTML = devices.length ? devices.map((device, index) => `<option value="${device.deviceId}">${device.label || `Cámara ${index + 1}`}</option>`).join("") : "<option>No se encontraron cámaras</option>";
       select.disabled = !devices.length;

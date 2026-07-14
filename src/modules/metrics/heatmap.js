@@ -1,5 +1,6 @@
 const GRID_COLS = 48;
 const GRID_ROWS = 31;
+const DECAY_CELL_COUNT = 200;
 
 const COLOR_STOPS = [
   [0.0, [18, 52, 110]],
@@ -20,6 +21,7 @@ export class Heatmap {
   #dimensions = { length: 105, width: 68 };
   #grid = [];
   #max = 0;
+  #totalPoints = 0;
 
   constructor(events, canvas) {
     this.#events = events;
@@ -44,6 +46,7 @@ export class Heatmap {
   #resetGrid() {
     this.#grid = Array.from({ length: GRID_COLS }, () => new Array(GRID_ROWS).fill(0));
     this.#max = 0;
+    this.#totalPoints = 0;
   }
 
   #accumulate({ tracks }) {
@@ -54,6 +57,22 @@ export class Heatmap {
       const row = Math.min(GRID_ROWS - 1, Math.floor((track.fieldPosition.y / this.#dimensions.width) * GRID_ROWS));
       this.#grid[col][row] += 1;
       if (this.#grid[col][row] > this.#max) this.#max = this.#grid[col][row];
+      this.#totalPoints += 1;
+      changed = true;
+    }
+    if (this.#totalPoints > DECAY_CELL_COUNT) {
+      for (let c = 0; c < GRID_COLS; c++) {
+        for (let r = 0; r < GRID_ROWS; r++) {
+          this.#grid[c][r] = Math.floor(this.#grid[c][r] * 0.5);
+        }
+      }
+      this.#totalPoints = 0;
+      this.#max = 0;
+      for (let c = 0; c < GRID_COLS; c++) {
+        for (let r = 0; r < GRID_ROWS; r++) {
+          if (this.#grid[c][r] > this.#max) this.#max = this.#grid[c][r];
+        }
+      }
       changed = true;
     }
     if (changed) this.#render();

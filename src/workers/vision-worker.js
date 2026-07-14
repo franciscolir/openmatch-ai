@@ -1,5 +1,14 @@
 import { FilesetResolver, ObjectDetector, PoseLandmarker } from "@mediapipe/tasks-vision";
 
+{
+  let _saved;
+  Object.defineProperty(self, "ModuleFactory", {
+    get() { return _saved; },
+    set(v) { if (v != null) _saved = v; },
+    configurable: true,
+  });
+}
+
 let detector;
 let poseLandmarker;
 let mode;

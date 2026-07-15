@@ -77,8 +77,10 @@ export class App {
   }
 
   #setPhase(phase) {
-    this.#root.querySelector("#setup-overlay").hidden = phase !== "setup";
-    this.#root.querySelector("#summary-overlay").hidden = phase !== "summary";
+    const setup = this.#root.querySelector("#setup-overlay");
+    const summary = this.#root.querySelector("#summary-overlay");
+    if (setup) setup.hidden = phase !== "setup";
+    if (summary) summary.hidden = phase !== "summary";
   }
 
   #initMatchView() {
@@ -1016,24 +1018,25 @@ export class App {
         if (lengthEl) lengthEl.value = field.length;
         if (widthEl) widthEl.value = field.width;
       }
-      const teamColors = await this.#store.loadSetting("teamColors");
-      if (teamColors) {
-        const aInput = this.#root.querySelector("#color-team-a");
-        const bInput = this.#root.querySelector("#color-team-b");
-        const ballInput = this.#root.querySelector("#color-ball");
-        if (teamColors.teamA && aInput) aInput.value = teamColors.teamA;
-        if (teamColors.teamB && bInput) bInput.value = teamColors.teamB;
-        if (teamColors.ball && ballInput) ballInput.value = teamColors.ball;
-      }
+      const teamColors = await this.#store.loadSetting("teamColors") || {};
       const colors = {
-        teamA: this.#root.querySelector("#color-team-a")?.value || "#3da5ff",
-        teamB: this.#root.querySelector("#color-team-b")?.value || "#ff6b6b",
-        ball: this.#root.querySelector("#color-ball")?.value || "#f5c518",
+        teamA: teamColors.teamA || "#3da5ff",
+        teamB: teamColors.teamB || "#ff6b6b",
+        ball: teamColors.ball || "#f5c518",
       };
+      const aInput = this.#root.querySelector("#color-team-a");
+      const bInput = this.#root.querySelector("#color-team-b");
+      const ballInput = this.#root.querySelector("#color-ball");
+      if (aInput) aInput.value = colors.teamA;
+      if (bInput) bInput.value = colors.teamB;
+      if (ballInput) ballInput.value = colors.ball;
       this.#events.emit("settings.teamColors", colors);
-      this.#root.querySelector(".dot.team-a").style.background = colors.teamA;
-      this.#root.querySelector(".dot.team-b").style.background = colors.teamB;
-      this.#root.querySelector(".dot.ball").style.background = colors.ball;
+      const aDot = this.#root.querySelector(".dot.team-a");
+      const bDot = this.#root.querySelector(".dot.team-b");
+      const ballDot = this.#root.querySelector(".dot.ball");
+      if (aDot) aDot.style.background = colors.teamA;
+      if (bDot) bDot.style.background = colors.teamB;
+      if (ballDot) ballDot.style.background = colors.ball;
     } catch (error) { console.warn("No se pudieron restaurar los ajustes:", error?.message || error); }
   }
 

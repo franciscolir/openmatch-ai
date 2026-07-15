@@ -83,4 +83,5 @@
 #draw-overlay:not([hidden]) { pointer-events:auto; }
 #analysis-overlay { z-index:2; } #field-overlay { z-index:3; }
 #field-overlay.calibration-active { cursor:crosshair; pointer-events:auto; }
+[hidden] { display:none !important; }
 .field-type-picker { display:flex; gap:6px; width:100%; }

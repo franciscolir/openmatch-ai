@@ -522,23 +522,24 @@ export class App {
               </div>
               <button id="btn-flip" class="material-symbols-outlined p-2 rounded-full transition-colors" style="color:#c2cab0;font-size:20px">flip_camera_ios</button>
             </div>
-            <div class="flex gap-4" style="min-height:100px">
-              <div class="flex flex-col gap-2 justify-center" style="width:180px">
-                <button id="field-toggle" class="flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors" style="background:#283549;color:#d5e3fd"><span class="material-symbols-outlined" style="font-size:18px">straighten</span> Calibrar</button>
-                <div class="flex gap-2"><input id="field-width" class="flex-1 rounded px-2 py-1 text-xs text-center" placeholder="Ancho" style="background:#051426;border:1px solid #424935;color:#aff73f;font-family:monospace" value="68" /><input id="field-length" class="flex-1 rounded px-2 py-1 text-xs text-center" placeholder="Largo" style="background:#051426;border:1px solid #424935;color:#aff73f;font-family:monospace" value="105" /></div>
-                <button id="draw-toggle" class="flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors" style="background:#283549;color:#d5e3fd"><span class="material-symbols-outlined" style="font-size:16px">gesture</span> Dibujo</button>
+            <div class="flex gap-3 items-stretch" style="min-height:80px">
+              <div class="flex items-center gap-3 px-3 rounded-xl" style="background:rgba(16,24,39,.8);border:1px solid #263148">
+                <button id="field-toggle" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors" style="background:#283549;color:#d5e3fd;white-space:nowrap"><span class="material-symbols-outlined" style="font-size:18px">straighten</span> Calibrar</button>
+                <div class="flex items-center gap-2 text-xs" style="color:#c2cab0">Ancho <input id="field-width" style="width:48px;background:#051426;border:1px solid #424935;border-radius:4px;padding:3px 4px;color:#aff73f;font-family:monospace;text-align:center" value="68" /></div>
+                <div class="flex items-center gap-2 text-xs" style="color:#c2cab0">Largo <input id="field-length" style="width:48px;background:#051426;border:1px solid #424935;border-radius:4px;padding:3px 4px;color:#aff73f;font-family:monospace;text-align:center" value="105" /></div>
+                <button id="draw-toggle" class="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs transition-colors" style="background:#283549;color:#d5e3fd"><span class="material-symbols-outlined" style="font-size:16px">gesture</span></button>
                 <div class="draw-controls" id="draw-controls" hidden>
-                  <div class="flex gap-1 flex-wrap mt-1"><button class="draw-tool active px-2 py-1 rounded text-xs" data-tool="arrow" style="background:#283549">→</button><button class="draw-tool px-2 py-1 rounded text-xs" data-tool="line" style="background:#283549">╱</button><button class="draw-tool px-2 py-1 rounded text-xs" data-tool="circle" style="background:#283549">○</button><button class="draw-tool px-2 py-1 rounded text-xs" data-tool="text" style="background:#283549">T</button><button class="draw-tool px-2 py-1 rounded text-xs" data-tool="free" style="background:#283549">✎</button><input id="draw-color" type="color" value="#ffffff" style="width:24px;height:24px;padding:0;border:none;cursor:pointer" /></div>
-                  <div class="flex gap-2 mt-1 flex-wrap"><button id="draw-undo" class="px-2 py-0.5 rounded text-xs" style="background:#283549">↩</button><button id="draw-clear" class="px-2 py-0.5 rounded text-xs" style="background:#283549">✕</button><button id="draw-freeze" class="px-2 py-0.5 rounded text-xs" style="background:#283549">⏸</button><input id="draw-template-name" class="flex-1 rounded px-2 py-0.5 text-xs" placeholder="Nombre" style="min-width:60px;background:#051426;border:1px solid #424935;color:#d5e3fd" /><button id="draw-save-btn" class="px-2 py-0.5 rounded text-xs" style="background:#283549">Guardar</button></div>
+                  <div class="flex gap-1 flex-wrap ml-2"><button class="draw-tool active px-2 py-1 rounded text-xs" data-tool="arrow" style="background:#283549">→</button><button class="draw-tool px-2 py-1 rounded text-xs" data-tool="line" style="background:#283549">╱</button><button class="draw-tool px-2 py-1 rounded text-xs" data-tool="circle" style="background:#283549">○</button><button class="draw-tool px-2 py-1 rounded text-xs" data-tool="text" style="background:#283549">T</button><button class="draw-tool px-2 py-1 rounded text-xs" data-tool="free" style="background:#283549">✎</button><input id="draw-color" type="color" value="#ffffff" style="width:22px;height:22px;padding:0;border:none;cursor:pointer" /></div>
+                  <div class="flex gap-2 mt-1 flex-wrap"><button id="draw-undo" class="px-2 py-0.5 rounded text-xs" style="background:#283549">↩</button><button id="draw-clear" class="px-2 py-0.5 rounded text-xs" style="background:#283549">✕</button><button id="draw-freeze" class="px-2 py-0.5 rounded text-xs" style="background:#283549">⏸</button><input id="draw-template-name" class="rounded px-2 py-0.5 text-xs" placeholder="Nombre" style="width:80px;background:#051426;border:1px solid #424935;color:#d5e3fd" /><button id="draw-save-btn" class="px-2 py-0.5 rounded text-xs" style="background:#283549">Guardar</button></div>
                   <div id="draw-templates" class="flex gap-1 flex-wrap mt-1"></div>
                 </div>
               </div>
-              <div class="flex-1 rounded-xl overflow-hidden flex flex-col" style="background:rgba(16,24,39,.8);border:1px solid #263148">
-                <div class="px-3 py-1.5 border-b flex justify-between items-center" style="background:#1d2b3e;border-color:#424935">
-                  <span class="text-[10px] font-bold uppercase" style="color:#c2cab0">Vista táctica</span>
-                  <span class="w-2 h-2 rounded-full" style="background:#aff73f"></span>
+              <div class="flex-1 rounded-xl overflow-hidden flex flex-col" style="background:rgba(16,24,39,.8);border:1px solid #263148;max-width:280px">
+                <div class="px-2 py-1 border-b flex justify-between items-center" style="background:#1d2b3e;border-color:#424935">
+                  <span class="text-[9px] font-bold uppercase" style="color:#c2cab0">Táctica</span>
+                  <span class="w-1.5 h-1.5 rounded-full" style="background:#aff73f"></span>
                 </div>
-                <div class="flex-1 relative" style="min-height:200px;background:radial-gradient(circle at center,#162235 0%,#101827 100%)">
+                <div class="flex-1 relative" style="min-height:80px;max-height:120px;background:radial-gradient(circle at center,#162235 0%,#101827 100%)">
                   <canvas id="tactical-field" class="absolute inset-0 w-full h-full"></canvas>
                   <canvas id="heatmap-field" class="absolute inset-0 w-full h-full" hidden></canvas>
                 </div>

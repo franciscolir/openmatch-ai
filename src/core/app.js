@@ -412,159 +412,143 @@ export class App {
 
   #workspaceHTML() {
     return `
-      <header class="topbar">
-        <a class="brand" href="#" id="home-link" aria-label="Volver al inicio"><span class="brand-mark">←</span>Inicio</a>
-        <div class="privacy"><span></span> Local</div>
-      </header>
-      <main class="workspace">
-        <div class="match-bar" id="match-bar" hidden>
-          <div class="bar-timer"><span id="timer-display">00:00</span></div>
-          <div class="bar-possession" id="possession-bar"><span class="pos-label pos-a" id="pos-a">A 50%</span><div class="pos-track"><div class="pos-fill pos-fill-a" id="pos-fill-a" style="width:50%"></div></div><span class="pos-label pos-b" id="pos-b">50% B</span></div>
-          <div class="bar-events" id="event-timeline"><div class="timeline-track" id="timeline-track"></div></div>
+      <nav class="fixed top-0 w-full z-50 flex justify-between items-center px-8 h-16" style="background:#051426;border-bottom:1px solid #424935">
+        <div class="flex items-center gap-4">
+          <button id="home-link" class="material-symbols-outlined" style="color:#aff73f;font-variation-settings:'FILL'1;cursor:pointer;font-size:24px">arrow_back</button>
+          <span style="color:#ffffff;font-family:Inter;font-size:20px;font-weight:600">OpenMatch AI</span>
         </div>
-        <section class="capture panel">
-            <div class="section-heading"><div><p class="eyebrow">NUEVO PARTIDO</p><h2>Fuente de video</h2></div><span id="source-status" class="status">Sin conectar</span></div>
-            <div class="source-picker" role="group" aria-label="Origen del video">
-              <button class="source active" data-source="camera">Cámara en directo</button>
-              <button class="source" data-source="file">Video grabado</button>
+        <div class="px-3 py-1 rounded border text-xs font-bold tracking-widest" style="background:#283549;border-color:#424935;color:#c2cab0">Procesamiento 100% local</div>
+      </nav>
+      <main style="margin-top:64px;height:calc(100vh - 64px);display:flex;flex-direction:column;overflow:hidden;background:#051426">
+        <div class="h-14 flex items-center px-8 gap-8" style="background:#0e1c2f;border-bottom:1px solid #424935">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined" style="color:#94da1d;font-size:18px">timer</span>
+            <span class="tabular-nums font-bold text-xl" id="timer-display" style="color:#aff73f;font-family:'JetBrains Mono',monospace">00:00</span>
+          </div>
+          <div class="flex-1" style="max-width:400px">
+            <div class="flex justify-between text-[10px] uppercase font-bold mb-1 px-1">
+              <span id="pos-a" style="color:#3da5ff">A 50%</span>
+              <span id="pos-b" style="color:#ff6b6b">50% B</span>
             </div>
-            <div class="video-stage" id="video-stage">
-              <video id="camera-preview" autoplay playsinline muted></video>
-              <canvas id="analysis-overlay" aria-label="Detecciones"></canvas>
-              <canvas id="field-overlay" aria-label="Calibración"></canvas>
-              <canvas id="draw-overlay" aria-label="Dibujo" hidden></canvas>
-              <div class="video-empty" id="video-empty"><span class="camera-icon">⌁</span><strong>Conecta una cámara o selecciona un video</strong></div>
-              <div class="overlay-label">LOCAL</div>
+            <div class="h-1.5 w-full rounded-full flex overflow-hidden" style="background:#283549">
+              <div class="h-full" id="pos-fill-a" style="width:50%;background:#3da5ff"></div>
+              <div class="h-full" id="pos-fill-b" style="width:50%;background:#ff6b6b"></div>
             </div>
-            <div class="camera-controls">
-              <label class="select-wrap">Cámara <select id="camera-select" disabled><option>Buscando dispositivos…</option></select></label>
-              <label class="select-wrap">Calidad <select id="quality-select"><option value="720">720p</option><option value="1080">1080p</option><option value="480">480p</option></select></label>
-              <button id="main-action" class="primary" disabled>📷 Iniciar cámara</button>
-            </div>
-            <div class="field-controls">
-              <div class="field-type-picker" role="group" aria-label="Tipo de cancha">
-                <button class="field-type active" data-type="football11">Fútbol 11</button>
-                <button class="field-type" data-type="football7">Fútbol 7</button>
-                <button class="field-type" data-type="baby">Baby</button>
-                <button class="field-type" data-type="futsal">Futsal</button>
+          </div>
+          <div class="flex-1 flex items-center relative h-10 px-4" style="max-width:400px">
+            <div class="absolute w-full h-px top-1/2 -translate-y-1/2" style="background:#424935"></div>
+            <div class="flex w-full justify-around relative" id="timeline-track"></div>
+          </div>
+        </div>
+        <div class="flex-1 flex overflow-hidden">
+          <div class="flex-[7] flex flex-col p-4 gap-4 overflow-hidden">
+            <div class="relative flex-1 rounded-xl overflow-hidden" style="background:rgba(16,24,39,.8);border:1px solid #263148">
+              <video id="camera-preview" autoplay playsinline muted class="absolute inset-0 w-full h-full" style="object-fit:contain"></video>
+              <canvas id="analysis-overlay" class="absolute inset-0 w-full h-full" style="pointer-events:none"></canvas>
+              <canvas id="field-overlay" class="absolute inset-0 w-full h-full" style="z-index:2"></canvas>
+              <canvas id="draw-overlay" class="absolute inset-0 w-full h-full" hidden style="z-index:3;cursor:crosshair"></canvas>
+              <div class="absolute inset-0 flex items-center justify-center" id="video-empty">
+                <div class="text-center" style="color:#c2cab0"><span class="material-symbols-outlined" style="color:#aff73f;font-size:4rem">videocam</span><p class="mt-2 text-sm">Conecta una cámara o selecciona un video</p></div>
               </div>
-              <label class="select-wrap">Largo (m)<input id="field-length" type="number" min="20" max="130" value="105" /></label>
-              <label class="select-wrap">Ancho (m)<input id="field-width" type="number" min="15" max="100" value="68" /></label>
-              <button id="field-toggle" class="secondary">Calibrar cancha</button>
-              <button id="draw-toggle" class="secondary">✎ Dibujo</button>
             </div>
-            <div class="draw-controls" id="draw-controls" hidden>
-              <div class="draw-toolbar"><button class="draw-tool active" data-tool="arrow">→</button><button class="draw-tool" data-tool="line">╱</button><button class="draw-tool" data-tool="circle">○</button><button class="draw-tool" data-tool="text">T</button><button class="draw-tool" data-tool="free">✎</button><label class="draw-color"><input id="draw-color" type="color" value="#ffffff" /></label><button id="draw-undo">↩</button><button id="draw-clear">✕</button></div>
-              <div class="draw-actions"><button id="draw-freeze" class="secondary">⏸</button><label class="draw-save"><input id="draw-template-name" type="text" placeholder="Nombre" /><button id="draw-save-btn" class="secondary">Guardar</button></label></div>
-              <div id="draw-templates"></div>
-            </div>
-            <details class="training-settings">
-              <summary>Equipos</summary>
-              <div class="team-config"><label>A <input id="color-team-a" type="color" value="#3da5ff" /></label><label>B <input id="color-team-b" type="color" value="#ff6b6b" /></label><label>Balón <input id="color-ball" type="color" value="#f5c518" /></label></div>
-            </details>
-            <div id="file-controls" class="file-controls" hidden>
-              <label class="file-picker" for="video-file"><span>Seleccionar video</span><input id="video-file" type="file" accept="video/*" /></label>
-              <p id="file-name" class="file-name">El archivo permanece en el dispositivo.</p>
-            </div>
-            <p id="camera-message" class="message" aria-live="polite">Conecta una cámara o selecciona un video.</p>
-          </section>
-          <section class="tactical panel">
-            <div class="section-heading"><div><p class="eyebrow">VISTA TÁCTICA</p><h2>Cancha en vivo</h2></div><div class="heading-actions"><span id="field-status" class="status">Sin calibrar</span><div class="view-toggle"><button class="view active" data-view="tactical">Táctica</button><button class="view" data-view="heatmap">Calor</button></div></div></div>
-            <div id="tactical-stage" class="tactical-stage">
-              <canvas id="tactical-field"></canvas>
-              <canvas id="heatmap-field"></canvas>
-            </div>
-            <div class="tactical-legend">
-              <span><i class="dot team-a"></i>A</span>
-              <span><i class="dot team-b"></i>B</span>
-              <span><i class="dot ball"></i>Balón</span>
-            </div>
-          </section>
-          <aside class="sidebar">
-            <div class="event-marker" id="event-marker" hidden>
-              <button class="event-btn goal" data-event="goal">⚽ Gol</button>
-              <button class="event-btn fault" data-event="fault">🚩 Falta</button>
-              <button class="event-btn offside" data-event="offside">🚦 Offside</button>
-              <button class="event-btn chance" data-event="chance">🎯 Ocasión</button>
-              <button class="event-btn card" data-event="yellow">🟨 Tarjeta</button>
-              <div class="event-feedback" id="event-feedback" hidden><ol class="event-feedback-list" id="event-list"></ol></div>
-            </div>
-            <div id="dashboard"></div><div id="history"></div><div id="insights"></div>
-          </aside>
-        <aside class="setup-overlay" id="setup-overlay">
-          <div class="setup-card">
-            <p class="eyebrow">NUEVO PARTIDO</p>
-            <h3>Configuración</h3>
-            <p style="color:var(--muted);font-size:.78rem;margin:0 0 18px">Completa todos los campos para comenzar.</p>
-            <div class="team-row">
-              <label>🏠 Equipo local
-                <div><input type="text" id="sl-team-a-name" placeholder="Ej: Real Madrid" /><input type="color" id="sl-team-a-color" value="#3da5ff" /></div></label>
-              <label>✈️ Equipo visitante
-                <div><input type="text" id="sl-team-b-name" placeholder="Ej: Barcelona" /><input type="color" id="sl-team-b-color" value="#ff6b6b" /></div></label>
-            </div>
-            <div class="field-row" style="margin-top:16px">
-              <label class="select-wrap">⚽ Deporte
-                <div class="field-type-picker" style="margin-top:4px">
-                  <button class="field-type active" data-type="football11">F11</button>
-                  <button class="field-type" data-type="football7">F7</button>
-                  <button class="field-type" data-type="baby">Baby</button>
-                  <button class="field-type" data-type="futsal">Futsal</button>
-                </div></label>
-              <label class="select-wrap" style="flex:0 0 80px">Largo <input id="sl-field-length" type="number" value="105" /></label>
-              <label class="select-wrap" style="flex:0 0 80px">Ancho <input id="sl-field-width" type="number" value="68" /></label>
-            </div>
-            <div class="field-row" style="margin-top:12px">
-              <label class="select-wrap">⏱️ Duración (min) <input id="sl-duration" type="number" min="20" max="120" value="90" /></label>
-              <label class="select-wrap">👥 Jugadores por equipo <input id="sl-players" type="number" min="5" max="11" value="11" /></label>
-            </div>
-            <div class="field-row" style="margin-top:12px">
-              <label class="select-wrap">⚡ Modo
-                <div class="mode-picker" style="margin-top:4px">
-                  <button class="mode active" data-mode="balanced">Balanceado</button>
-                  <button class="mode" data-mode="performance">Rendimiento</button>
-                  <button class="mode" data-mode="precision">Precisión</button>
-                  <button class="mode" data-mode="saver">Ahorro</button>
-                </div></label>
-              <label class="select-wrap">🎨 Balón <input id="sl-ball-color" type="color" value="#f5c518" style="width:60px;height:36px;padding:1px;border:1px solid var(--line);border-radius:5px;background:transparent;cursor:pointer" /></label>
-            </div>
-            <div style="display:flex;gap:10px;margin-top:20px">
-              <button id="setup-start" class="primary" style="flex:1;font-size:.9rem;padding:12px" disabled>Comenzar</button>
+            <div class="h-48 flex gap-4">
+              <div class="flex-1 rounded-xl p-4 flex flex-col gap-3" style="background:rgba(16,24,39,.8);border:1px solid #263148">
+                <span class="text-xs font-bold tracking-widest uppercase" style="color:#c2cab0">Herramientas de campo</span>
+                <div class="grid grid-cols-2 gap-2">
+                  <button id="field-toggle" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors" style="background:#283549;color:#d5e3fd"><span class="material-symbols-outlined" style="font-size:18px">straighten</span> Calibrar cancha</button>
+                  <button id="draw-toggle" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors" style="background:#283549;color:#d5e3fd"><span class="material-symbols-outlined" style="font-size:18px">gesture</span> Dibujo táctico</button>
+                </div>
+                <div class="flex items-center gap-3 mt-1">
+                  <div class="flex-1"><label class="text-[10px] block mb-1" style="color:#c2cab0">Ancho (m)</label><input id="field-width" class="w-full rounded px-2 py-1 text-sm" style="background:#051426;border:1px solid #424935;color:#aff73f;font-family:monospace" value="68.0" /></div>
+                  <div class="flex-1"><label class="text-[10px] block mb-1" style="color:#c2cab0">Largo (m)</label><input id="field-length" class="w-full rounded px-2 py-1 text-sm" style="background:#051426;border:1px solid #424935;color:#aff73f;font-family:monospace" value="105.0" /></div>
+                </div>
+                <div class="draw-controls" id="draw-controls" hidden>
+                  <div class="flex gap-1 flex-wrap"><button class="draw-tool active px-2 py-1 rounded text-xs" data-tool="arrow" style="background:#283549">→</button><button class="draw-tool px-2 py-1 rounded text-xs" data-tool="line" style="background:#283549">╱</button><button class="draw-tool px-2 py-1 rounded text-xs" data-tool="circle" style="background:#283549">○</button><button class="draw-tool px-2 py-1 rounded text-xs" data-tool="text" style="background:#283549">T</button><button class="draw-tool px-2 py-1 rounded text-xs" data-tool="free" style="background:#283549">✎</button><input id="draw-color" type="color" value="#ffffff" style="width:28px;height:28px;padding:0;border:none;cursor:pointer" /></div>
+                  <div class="flex gap-2 mt-2 flex-wrap"><button id="draw-undo" class="px-2 py-1 rounded text-xs" style="background:#283549">↩</button><button id="draw-clear" class="px-2 py-1 rounded text-xs" style="background:#283549">✕</button><button id="draw-freeze" class="px-2 py-1 rounded text-xs" style="background:#283549">⏸</button><input id="draw-template-name" class="flex-1 rounded px-2 py-1 text-xs" placeholder="Nombre" style="min-width:80px;background:#051426;border:1px solid #424935;color:#d5e3fd" /><button id="draw-save-btn" class="px-2 py-1 rounded text-xs" style="background:#283549">Guardar</button></div>
+                  <div id="draw-templates" class="flex gap-1 flex-wrap mt-1"></div>
+                </div>
+              </div>
+              <div class="w-80 rounded-xl overflow-hidden flex flex-col" style="background:rgba(16,24,39,.8);border:1px solid #263148">
+                <div class="px-3 py-1.5 border-b flex justify-between items-center" style="background:#1d2b3e;border-color:#424935">
+                  <span class="text-[10px] font-bold uppercase" style="color:#c2cab0">Vista táctica</span>
+                  <span class="w-2 h-2 rounded-full" style="background:#aff73f"></span>
+                </div>
+                <div class="flex-1 relative" style="background:radial-gradient(circle at center,#162235 0%,#101827 100%)">
+                  <canvas id="tactical-field" class="absolute inset-0 w-full h-full"></canvas>
+                  <canvas id="heatmap-field" class="absolute inset-0 w-full h-full" hidden></canvas>
+                </div>
+              </div>
             </div>
           </div>
-        </aside>
-        <aside class="summary-overlay" id="summary-overlay" hidden>
-          <div class="summary-card">
-            <p class="eyebrow">RESUMEN</p>
-            <h3 style="margin:6px 0 12px">Partido finalizado</h3>
-            <div id="summary-stats"></div>
-            <div id="summary-events"></div>
-            <div id="summary-insights"></div>
-            <div style="display:flex;gap:10px;margin-top:16px">
-              <button id="summary-new" class="primary" style="flex:1">Nuevo partido</button>
-              <button id="summary-home" class="secondary" style="flex:1">Inicio</button>
+          <div class="flex-[3] flex flex-col p-4 pl-0 gap-4 overflow-hidden">
+            <div class="rounded-xl p-4 grid grid-cols-2 gap-4" style="background:rgba(16,24,39,.8);border:1px solid #263148">
+              <div class="flex flex-col"><span class="text-[10px] font-bold uppercase" style="color:#c2cab0">Res. Input</span><span id="dash-resolution" class="text-sm" style="font-family:monospace;color:#d5e3fd">—</span></div>
+              <div class="flex flex-col"><span class="text-[10px] font-bold uppercase" style="color:#c2cab0">Frame Rate</span><span id="dash-fps" class="text-sm" style="font-family:monospace;color:#d5e3fd">—</span></div>
+              <div class="flex flex-col"><span class="text-[10px] font-bold uppercase" style="color:#c2cab0">Tracks</span><span id="dash-tracks" class="text-sm" style="font-family:monospace;color:#d5e3fd">—</span></div>
+              <div class="flex flex-col"><span class="text-[10px] font-bold uppercase" style="color:#c2cab0">Max Speed</span><span id="dash-speed" class="text-sm" style="font-family:monospace;color:#d5e3fd">—</span></div>
+            </div>
+            <div class="grid grid-cols-1 gap-2 event-marker" id="event-marker" hidden>
+              <button class="event-btn goal flex items-center justify-between px-4 py-3 rounded-xl transition-all" data-event="goal" style="background:rgba(250,204,21,.1);border:1px solid rgba(250,204,21,.2)"><div class="flex items-center gap-3"><span class="text-xl">⚽</span><span class="text-sm font-semibold" style="color:#facc15">Gol</span></div></button>
+              <button class="event-btn fault flex items-center justify-between px-4 py-3 rounded-xl transition-all" data-event="fault" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2)"><div class="flex items-center gap-3"><span class="text-xl">🚩</span><span class="text-sm font-semibold" style="color:#ef4444">Falta</span></div></button>
+              <button class="event-btn offside flex items-center justify-between px-4 py-3 rounded-xl transition-all" data-event="offside" style="background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.2)"><div class="flex items-center gap-3"><span class="text-xl">🚦</span><span class="text-sm font-semibold" style="color:#f97316">Offside</span></div></button>
+              <button class="event-btn chance flex items-center justify-between px-4 py-3 rounded-xl transition-all" data-event="chance" style="background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2)"><div class="flex items-center gap-3"><span class="text-xl">🎯</span><span class="text-sm font-semibold" style="color:#3b82f6">Ocasión</span></div></button>
+              <button class="event-btn card flex items-center justify-between px-4 py-3 rounded-xl transition-all" data-event="yellow" style="background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.2)"><div class="flex items-center gap-3"><span class="text-xl">🟨</span><span class="text-sm font-semibold" style="color:#eab308">Tarjeta</span></div></button>
+            </div>
+            <div class="flex-1 rounded-xl flex flex-col overflow-hidden" style="background:rgba(16,24,39,.8);border:1px solid #263148">
+              <div class="px-4 py-3 border-b flex items-center justify-between" style="background:#122033;border-color:#424935">
+                <span class="text-xs font-bold tracking-widest uppercase" style="color:#c2cab0">Registro de Eventos</span>
+                <span class="text-[10px]" style="color:#c2cab0">Live</span>
+              </div>
+              <div class="flex-1 overflow-y-auto p-4 space-y-3 event-feedback" id="event-feedback">
+                <ol class="event-feedback-list" id="event-list" style="list-style:none;margin:0;padding:0"></ol>
+              </div>
             </div>
           </div>
-        </aside>
+        </div>
+        <footer class="h-16 flex items-center justify-between px-8 border-t relative" style="background:#010e21;border-color:#424935">
+          <div class="flex items-center gap-8">
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] font-bold uppercase" style="color:#c2cab0">Cámara</span>
+              <select id="camera-select" class="rounded-lg px-3 py-1 text-sm" style="background:#051426;border:1px solid #424935;color:#d5e3fd"><option>Buscando dispositivos...</option></select>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] font-bold uppercase" style="color:#c2cab0">Calidad</span>
+              <div class="flex rounded-lg overflow-hidden" style="background:#051426;border:1px solid #424935">
+                <button class="qual-btn px-3 py-1 text-[10px] font-bold" data-q="1080" style="background:#aff73f;color:#213600">1080p</button>
+                <button class="qual-btn px-3 py-1 text-[10px] font-bold" data-q="720" style="color:#c2cab0">720p</button>
+                <button class="qual-btn px-3 py-1 text-[10px] font-bold" data-q="480" style="color:#c2cab0">480p</button>
+              </div>
+            </div>
+          </div>
+          <div class="absolute left-1/2 -translate-x-1/2 -top-10">
+            <button id="main-action" class="h-16 px-8 rounded-full flex items-center gap-3 shadow-2xl transition-transform active:scale-95" style="background:#aff73f;color:#213600;box-shadow:0 0 20px rgba(175,247,63,.3)">
+              <span class="material-symbols-outlined" style="font-size:32px;font-variation-settings:'FILL'1">play_circle</span>
+              <span class="text-xl font-semibold" id="action-text">Iniciar análisis</span>
+            </button>
+          </div>
+          <div class="flex items-center gap-4">
+            <button id="btn-flip" class="material-symbols-outlined p-2 rounded-full transition-colors" style="color:#c2cab0">flip_camera_ios</button>
+            <button id="btn-settings" class="material-symbols-outlined p-2 rounded-full transition-colors" style="color:#c2cab0">settings</button>
+          </div>
+        </footer>
       </main>
-      <div class="bottom-bar" id="bottom-bar">
-        <div class="bottom-left">
-          <button id="btn-flip" class="bottom-btn" title="Cambiar cámara">🔄</button>
-          <select id="bottom-quality" class="bottom-select"><option value="1080">1080p</option><option value="720" selected>720p</option><option value="480">480p</option></select>
+      <aside class="summary-overlay" id="summary-overlay" hidden style="position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:rgba(5,20,38,.9);backdrop-filter:blur(12px);padding:20px">
+        <div style="max-width:580px;width:100%;max-height:80vh;overflow-y:auto;padding:28px;border-radius:18px;background:#122033;border:1px solid #424935">
+          <p class="text-xs font-bold tracking-widest" style="color:#aff73f">RESUMEN</p>
+          <h3 style="margin:6px 0 12px;font-size:1.3rem;font-weight:600;color:#ffffff">Partido finalizado</h3>
+          <div id="summary-stats"></div>
+          <div id="summary-events"></div>
+          <div id="summary-insights"></div>
+          <div style="display:flex;gap:10px;margin-top:16px">
+            <button id="summary-new" class="flex-1 px-4 py-3 rounded-lg font-bold" style="background:#aff73f;color:#213600">Nuevo partido</button>
+            <button id="summary-home" class="flex-1 px-4 py-3 rounded-lg font-bold" style="background:#283549;color:#d5e3fd">Inicio</button>
+          </div>
         </div>
-        <div class="bottom-right">
-          <button id="btn-settings" class="bottom-btn" title="Configuración">⚙️</button>
-        </div>
-      </div>
-      <footer>OpenMatch AI · MVP local-first · <span id="pwa-state">Comprobando modo offline…</span></footer>`;
+      </aside>`;
   }
 
   #bindControls() {
     const select = this.#root.querySelector("#camera-select");
-    const quality = this.#root.querySelector("#quality-select");
-    const fileInput = this.#root.querySelector("#video-file");
-    const sourceStatus = this.#root.querySelector("#source-status");
-    const cameraControls = this.#root.querySelector(".camera-controls");
-    const fileControls = this.#root.querySelector("#file-controls");
     const preview = this.#root.querySelector("#camera-preview");
     const fieldToggle = this.#root.querySelector("#field-toggle");
     this.#camera.attachPreview(preview);

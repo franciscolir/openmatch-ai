@@ -63,15 +63,15 @@ export class App {
   #navigate(view) {
     if (view === this.#view) return;
     this.#view = view;
+    this.#camera?.stop();
+    this.#analysis?.stop();
+    this.#root.querySelector(".workspace-screen")?.remove();
+    this.#destroyModules();
     if (view === "home") {
       this.#root.querySelector(".home-screen").hidden = false;
-      this.#root.querySelector(".workspace-screen")?.remove();
-      this.#destroyModules();
       return;
     }
     this.#root.querySelector(".home-screen").hidden = true;
-    this.#root.querySelector(".workspace-screen")?.remove();
-    this.#destroyModules();
     if (view === "match") this.#initMatchView();
     else if (view === "history") this.#initHistoryView();
     else if (view === "practice") this.#initPracticeView();
@@ -172,14 +172,12 @@ export class App {
       teamB: overlay.querySelector("#sl-color-b").value,
       ball: overlay.querySelector("#sl-color-ball").value,
     };
-    const t = this.#root; // root helper
-    t.querySelectorAll(".mode").forEach((b) => b.classList.toggle("active", b.dataset.mode === mode));
-    t.querySelectorAll(".field-type").forEach((b) => b.classList.toggle("active", b.dataset.type === ftype));
-    t.querySelector("#field-length").value = length;
-    t.querySelector("#field-width").value = width;
-    t.querySelector("#color-team-a").value = colors.teamA;
-    t.querySelector("#color-team-b").value = colors.teamB;
-    t.querySelector("#color-ball").value = colors.ball;
+    const ws = this.#root.querySelector(".workspace");
+    ws.querySelector("#field-length").value = length;
+    ws.querySelector("#field-width").value = width;
+    ws.querySelector("#color-team-a").value = colors.teamA;
+    ws.querySelector("#color-team-b").value = colors.teamB;
+    ws.querySelector("#color-ball").value = colors.ball;
     this.#events.emit("settings.teamColors", colors);
     this.#events.emit("settings.modeChanged", { mode });
     this.#tactical?.refreshFieldType(ftype, { length, width });
@@ -223,21 +221,10 @@ export class App {
     return `
       <header class="topbar">
         <a class="brand" href="#" id="home-link" aria-label="Volver al inicio"><span class="brand-mark">←</span>Inicio</a>
-        <div class="phase-bar">
-          <button class="phase-step active" data-phase="setup"><span class="phase-num">1</span> Configuración</button>
-          <button class="phase-step" data-phase="analysis" disabled><span class="phase-num">2</span> Análisis</button>
-          <button class="phase-step" data-phase="summary" disabled><span class="phase-num">3</span> Resumen</button>
-        </div>
         <div class="privacy"><span></span> Local</div>
       </header>
       <main class="workspace">
-        <div>
-          <section class="hero panel">
-            <p class="eyebrow">ANÁLISIS</p>
-            <h1>Tu partido, entendido<br />desde la cancha.</h1>
-            <p class="lead">Procesamiento 100% local.</p>
-          </section>
-          <section class="capture panel">
+        <section class="capture panel">
             <div class="section-heading"><div><p class="eyebrow">NUEVO PARTIDO</p><h2>Fuente de video</h2></div><span id="source-status" class="status">Sin conectar</span></div>
             <div class="source-picker" role="group" aria-label="Origen del video">
               <button class="source active" data-source="camera">Cámara en directo</button>
@@ -305,7 +292,6 @@ export class App {
             </div>
           </section>
           <aside class="sidebar"><div id="dashboard"></div><div id="history"></div><div id="insights"></div></aside>
-        </div>
         <aside class="setup-overlay" id="setup-overlay">
           <div class="setup-card">
             <p class="eyebrow">BIENVENIDO</p>
@@ -593,7 +579,7 @@ export class App {
       eventFeedback.hidden = false;
       eventList.scrollTop = eventList.scrollHeight;
     }));
-    this.#unsubscribers.push(this.#events.on("session.saved", () => { eventFeedback.hidden = true; eventList.innerHTML = ""; }));
+    this.#unsubscribers.push(this.#events.on("analysis.stopped", () => { eventFeedback.hidden = true; eventList.innerHTML = ""; }));
     this.#renderTemplateList();
       }
     });

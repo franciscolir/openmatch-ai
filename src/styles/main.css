@@ -31,9 +31,12 @@
 .video-empty, .overlay-label { z-index:1; }
 .secondary { padding:11px 16px; border:0; border-radius:7px; background:#25344d; color:var(--text); font-size:.8rem; font-weight:800; }
 .secondary:disabled { cursor:not-allowed; opacity:.5; }
-.field-controls { display:flex; gap:12px; align-items:end; padding-top:12px; }
+.field-controls { display:flex; gap:12px; align-items:end; padding-top:12px; flex-wrap:wrap; }
 .field-controls input { display:block; width:100%; margin-top:6px; padding:10px; border:1px solid var(--line); border-radius:7px; background:#111a2a; color:var(--text); }
 #analysis-overlay { z-index:2; }
 #field-overlay { z-index:3; }
 #field-overlay.calibration-active { cursor:crosshair; pointer-events:auto; }
+.field-type-picker { display:flex; gap:6px; width:100%; }
+.field-type { flex:1; padding:8px 6px; border:1px solid var(--line); border-radius:7px; background:transparent; color:var(--muted); font-size:.7rem; text-align:center; cursor:pointer; }
+.field-type.active { border-color:var(--accent); background:var(--accent-dark); color:var(--accent); }
 @media (max-width:590px) { .field-controls { flex-wrap:wrap; }.field-controls .select-wrap { min-width:42%; }.field-controls .secondary { width:100%; } }

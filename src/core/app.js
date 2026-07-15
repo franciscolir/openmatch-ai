@@ -110,8 +110,13 @@ export class App {
             <button id="analysis-toggle" class="secondary" disabled>Iniciar análisis</button>
           </div>
           <div class="field-controls">
-            <label class="select-wrap">Largo de cancha (m)<input id="field-length" type="number" min="40" max="130" value="105" /></label>
-            <label class="select-wrap">Ancho de cancha (m)<input id="field-width" type="number" min="20" max="100" value="68" /></label>
+            <div class="field-type-picker" role="group" aria-label="Tipo de cancha">
+              <button class="field-type active" data-type="football11">Fútbol 11</button>
+              <button class="field-type" data-type="football7">Fútbol 7</button>
+              <button class="field-type" data-type="futsal">Futsal</button>
+            </div>
+            <label class="select-wrap">Largo (m)<input id="field-length" type="number" min="20" max="130" value="105" /></label>
+            <label class="select-wrap">Ancho (m)<input id="field-width" type="number" min="15" max="100" value="68" /></label>
             <button id="field-toggle" class="secondary" disabled>Calibrar cancha</button>
           </div>
           <div id="file-controls" class="file-controls" hidden>
@@ -264,12 +269,29 @@ export class App {
       try { await this.#analysis.start(this.#root.querySelector(".mode.active").dataset.mode); }
       catch (error) { this.#events.emit("analysis.error", { message: error.message }); }
     });
+    const fieldTypeButtons = this.#root.querySelectorAll(".field-type");
+    const updateFieldType = (type) => {
+      this.#fieldCalibration.setFieldType(type);
+      const defaults = { football11: { length: 105, width: 68 }, football7: { length: 50, width: 30 }, futsal: { length: 40, width: 20 } };
+      const dims = defaults[type] || defaults.football11;
+      this.#root.querySelector("#field-length").value = dims.length;
+      this.#root.querySelector("#field-width").value = dims.width;
+      if (!this.#fieldCalibration.isActive && this.#fieldCalibration.fieldType !== type) {
+        this.#tactical.refreshFieldType(type);
+      }
+    };
+    fieldTypeButtons.forEach((btn) => btn.addEventListener("click", () => {
+      fieldTypeButtons.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      updateFieldType(btn.dataset.type);
+    }));
     fieldToggle.addEventListener("click", () => {
       if (this.#fieldCalibration.isActive) {
         this.#fieldCalibration.cancel();
         fieldToggle.textContent = "Calibrar cancha";
         return;
       }
+      const activeType = this.#root.querySelector(".field-type.active")?.dataset.type || "football11";
       const dimensions = {
         length: Number(this.#root.querySelector("#field-length").value),
         width: Number(this.#root.querySelector("#field-width").value)
@@ -278,6 +300,7 @@ export class App {
         this.#events.emit("field.calibrationError", { message: "Introduce dimensiones validas de cancha." });
         return;
       }
+      this.#fieldCalibration.setFieldType(activeType);
       this.#fieldCalibration.start(dimensions);
     });
     this.#root.querySelectorAll(".mode").forEach((button) => button.addEventListener("click", () => {

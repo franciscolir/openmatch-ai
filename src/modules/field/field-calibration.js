@@ -2,7 +2,12 @@ import { createHomography } from "../../utils/homography.js";
 
 const POINT_NAMES = ["esquina superior izquierda", "esquina superior derecha", "esquina inferior derecha", "esquina inferior izquierda"];
 
-/** Collects four user-selected field corners and emits a pixel-to-meter transform. */
+const DEFAULT_DIMENSIONS = {
+  football11: { length: 105, width: 68 },
+  football7: { length: 50, width: 30 },
+  futsal: { length: 40, width: 20 },
+};
+
 export class FieldCalibration {
   #events;
   #canvas;
@@ -12,7 +17,12 @@ export class FieldCalibration {
   #active = false;
   #resizeObserver;
   #dimensions;
+  #fieldType = "football11";
   #onClick;
+  #onMouseDown;
+  #onMouseMove;
+  #onMouseUp;
+  #dragIndex = -1;
   #unsubscribers = [];
 
   constructor(events, canvas, video) {
@@ -23,24 +33,45 @@ export class FieldCalibration {
     this.#resizeObserver = new ResizeObserver(() => this.#draw());
     this.#resizeObserver.observe(video);
     this.#onClick = (event) => this.#addPoint(event);
+    this.#onMouseDown = (event) => this.#startDrag(event);
+    this.#onMouseMove = (event) => this.#moveDrag(event);
+    this.#onMouseUp = () => this.#endDrag();
     canvas.addEventListener("click", this.#onClick);
+    canvas.addEventListener("mousedown", this.#onMouseDown);
+    canvas.addEventListener("mousemove", this.#onMouseMove);
+    canvas.addEventListener("mouseup", this.#onMouseUp);
   }
 
   destroy() {
     this.#resizeObserver.disconnect();
     this.#canvas.removeEventListener("click", this.#onClick);
+    this.#canvas.removeEventListener("mousedown", this.#onMouseDown);
+    this.#canvas.removeEventListener("mousemove", this.#onMouseMove);
+    this.#canvas.removeEventListener("mouseup", this.#onMouseUp);
     for (const unsub of this.#unsubscribers) unsub();
     this.#unsubscribers = [];
   }
 
   get isActive() { return this.#active; }
+  get fieldType() { return this.#fieldType; }
+
+  setFieldType(type) {
+    this.#fieldType = type;
+    if (DEFAULT_DIMENSIONS[type]) {
+      this.#dimensions = { ...DEFAULT_DIMENSIONS[type] };
+    }
+    if (this.#points.length === 4 && !this.#active) {
+      this.#recalibrate();
+    }
+  }
 
   start(dimensions) {
     this.#points = [];
     this.#active = true;
     this.#canvas.classList.add("calibration-active");
     this.#events.emit("field.calibrationStarted", {
-      message: `Marca la ${POINT_NAMES[0]} de la cancha.`
+      message: `Marca la ${POINT_NAMES[0]} de la cancha.`,
+      fieldType: this.#fieldType,
     });
     this.#dimensions = dimensions;
     this.#draw();
@@ -49,7 +80,9 @@ export class FieldCalibration {
   cancel() {
     this.#active = false;
     this.#points = [];
+    this.#dragIndex = -1;
     this.#canvas.classList.remove("calibration-active");
+    this.#events.emit("field.calibrationCancelled");
     this.#draw();
   }
 
@@ -59,26 +92,65 @@ export class FieldCalibration {
     if (this.#points.length < 4) {
       this.#events.emit("field.calibrationProgress", {
         count: this.#points.length,
-        message: `Marca la ${POINT_NAMES[this.#points.length]} de la cancha.`
+        message: `Marca la ${POINT_NAMES[this.#points.length]} de la cancha.`,
       });
       this.#draw();
       return;
     }
-    try {
-      const target = [
-        { x: 0, y: 0 },
-        { x: this.#dimensions.length, y: 0 },
-        { x: this.#dimensions.length, y: this.#dimensions.width },
-        { x: 0, y: this.#dimensions.width }
-      ];
-      const homography = createHomography(this.#points, target);
-      this.#active = false;
-      this.#canvas.classList.remove("calibration-active");
-      this.#events.emit("field.calibrated", { points: this.#points, dimensions: this.#dimensions, homography });
-    } catch (error) {
-      this.#events.emit("field.calibrationError", { message: error.message });
-      this.#points = [];
+    this.#active = false;
+    this.#canvas.classList.remove("calibration-active");
+    this.#computeAndEmit();
+  }
+
+  #startDrag(event) {
+    if (this.#active || this.#points.length !== 4) return;
+    const point = this.#videoPoint(event);
+    const hit = 0.03;
+    for (let i = 0; i < this.#points.length; i++) {
+      if (Math.abs(this.#points[i].x - point.x) < hit && Math.abs(this.#points[i].y - point.y) < hit) {
+        this.#dragIndex = i;
+        this.#canvas.style.cursor = "grabbing";
+        return;
+      }
     }
+  }
+
+  #moveDrag(event) {
+    if (this.#dragIndex < 0) return;
+    const point = this.#videoPoint(event);
+    this.#points[this.#dragIndex] = point;
+    this.#draw();
+  }
+
+  #endDrag() {
+    if (this.#dragIndex < 0) return;
+    this.#dragIndex = -1;
+    this.#canvas.style.cursor = "";
+    this.#recalibrate();
+  }
+
+  #recalibrate() {
+    try {
+      this.#computeAndEmit();
+    } catch {
+    }
+  }
+
+  #computeAndEmit() {
+    const target = [
+      { x: 0, y: 0 },
+      { x: this.#dimensions.length, y: 0 },
+      { x: this.#dimensions.length, y: this.#dimensions.width },
+      { x: 0, y: this.#dimensions.width },
+    ];
+    const homography = createHomography(this.#points, target);
+    this.#canvas.classList.remove("calibration-active");
+    this.#events.emit("field.calibrated", {
+      points: this.#points,
+      dimensions: this.#dimensions,
+      homography,
+      fieldType: this.#fieldType,
+    });
     this.#draw();
   }
 
@@ -105,7 +177,7 @@ export class FieldCalibration {
     const clickY = event.clientY - videoRect.top - offsetY;
     return {
       x: contentWidth > 0 ? Math.min(1, Math.max(0, clickX / contentWidth)) : 0,
-      y: contentHeight > 0 ? Math.min(1, Math.max(0, clickY / contentHeight)) : 0
+      y: contentHeight > 0 ? Math.min(1, Math.max(0, clickY / contentHeight)) : 0,
     };
   }
 
@@ -122,7 +194,7 @@ export class FieldCalibration {
       this.#canvas.style.height = `${rect.height}px`;
     }
     this.#context.clearRect(0, 0, width, height);
-    if (!this.#active && !this.#points.length) return;
+    if (!this.#points.length) return;
     const hasVideo = this.#video.videoWidth > 0 && this.#video.videoHeight > 0;
     const dpr = window.devicePixelRatio || 1;
     const cssW = rect.width;
@@ -147,9 +219,14 @@ export class FieldCalibration {
     this.#points.forEach((point, index) => {
       const canvas = toCanvas(point);
       this.#context.beginPath();
-      this.#context.arc(canvas.x, canvas.y, Math.max(5, width / 90), 0, Math.PI * 2);
+      this.#context.arc(canvas.x, canvas.y, Math.max(6, width / 80), 0, Math.PI * 2);
       this.#context.fill();
-      this.#context.fillText(String(index + 1), canvas.x + 9, canvas.y - 9);
+      this.#context.fillStyle = "#0a1020";
+      this.#context.textAlign = "center";
+      this.#context.textBaseline = "middle";
+      this.#context.font = `bold ${Math.max(10, width / 70)}px ui-sans-serif, system-ui`;
+      this.#context.fillText(String(index + 1), canvas.x, canvas.y + 1);
+      this.#context.fillStyle = "#ffca5c";
     });
     if (this.#points.length > 1) {
       this.#context.beginPath();
@@ -159,7 +236,16 @@ export class FieldCalibration {
         const canvas = toCanvas(point);
         this.#context.lineTo(canvas.x, canvas.y);
       }
+      this.#context.closePath();
       this.#context.stroke();
+    }
+    if (this.#points.length === 4 && !this.#active) {
+      this.#context.fillStyle = "rgba(255,202,92,.2)";
+      this.#context.fill();
+      this.#context.fillStyle = "rgba(255,255,255,.4)";
+      this.#context.font = `${Math.max(9, width / 65)}px ui-sans-serif, system-ui`;
+      this.#context.textAlign = "center";
+      this.#context.fillText("Arrastra los puntos para ajustar", width / 2 / dpr, height / dpr - 12);
     }
   }
 }

@@ -71,6 +71,8 @@ export class App {
       this.#renderHome();
       return;
     }
+    this.#root.innerHTML = "";
+    document.body.style.overflow = "auto";
     if (view === "match") this.#initMatchView();
     else if (view === "history") this.#initHistoryView();
     else if (view === "practice") this.#initPracticeView();

@@ -67,10 +67,14 @@ export class App {
       this.#root.querySelector(".home-screen").hidden = false;
       this.#root.querySelector(".workspace-screen")?.remove();
       this.#destroyModules();
-    } else {
-      this.#root.querySelector(".home-screen").hidden = true;
-      this.#initWorkspace();
+      return;
     }
+    this.#root.querySelector(".home-screen").hidden = true;
+    this.#root.querySelector(".workspace-screen")?.remove();
+    this.#destroyModules();
+    if (view === "match") this.#initMatchView();
+    else if (view === "history") this.#initHistoryView();
+    else if (view === "practice") this.#initPracticeView();
   }
 
   #setPhase(phase) {
@@ -78,7 +82,7 @@ export class App {
     this.#root.querySelector("#summary-overlay").hidden = phase !== "summary";
   }
 
-  #initWorkspace() {
+  #initMatchView() {
     const ws = document.createElement("div");
     ws.className = "workspace-screen";
     ws.innerHTML = this.#workspaceHTML();
@@ -115,8 +119,46 @@ export class App {
       this.#syncSetup();
       this.#setPhase("analysis");
     });
-    this.#root.querySelector("#summary-new").addEventListener("click", () => { this.#navigate("home"); this.#navigate("workspace"); });
+    this.#root.querySelector("#summary-new").addEventListener("click", () => { this.#navigate("home"); this.#navigate("match"); });
     this.#root.querySelector("#summary-home").addEventListener("click", () => this.#navigate("home"));
+  }
+
+  #initHistoryView() {
+    const ws = document.createElement("div");
+    ws.className = "workspace-screen";
+    ws.innerHTML = `<header class="topbar"><a class="brand" href="#" id="home-link"><span class="brand-mark">←</span>Inicio</a><div class="privacy">Historial</div></header><main class="workspace"><aside class="sidebar" style="grid-column:1/-1;max-width:600px;margin:0 auto"><div id="history"></div></aside></main><footer></footer>`;
+    this.#root.appendChild(ws);
+    this.#root.querySelector("#home-link")?.addEventListener("click", (e) => { e.preventDefault(); this.#navigate("home"); });
+    this.#history = new HistoryPanel(this.#root, this.#events, this.#store);
+  }
+
+  #initPracticeView() {
+    const ws = document.createElement("div");
+    ws.className = "workspace-screen";
+    ws.innerHTML = `<header class="topbar"><a class="brand" href="#" id="home-link"><span class="brand-mark">←</span>Inicio</a><div class="privacy">Práctica Táctica</div></header><main class="workspace" style="grid-template-columns:1fr"><section class="capture panel"><div class="section-heading"><h2>Dibujo táctico</h2></div><div class="video-stage" id="video-stage"><video id="camera-preview" autoplay playsinline muted></video><canvas id="draw-overlay" hidden></canvas><div class="video-empty"><span class="camera-icon">⌁</span><strong>Conecta una cámara o selecciona un video</strong></div></div><div class="camera-controls"><label class="select-wrap">Cámara <select id="camera-select"><option>Seleccionar cámara</option></select></label><button id="camera-toggle" class="primary">Iniciar cámara</button></div><div id="file-controls" class="file-controls"><label class="file-picker" for="pf-video-file"><span>Seleccionar video</span><input id="pf-video-file" type="file" accept="video/*" /></label></div><div class="draw-toolbar" style="margin-top:12px"><button class="draw-tool active" data-tool="arrow">→</button><button class="draw-tool" data-tool="line">╱</button><button class="draw-tool" data-tool="circle">○</button><button class="draw-tool" data-tool="text">T</button><button class="draw-tool" data-tool="free">✎</button><label><input id="pf-draw-color" type="color" value="#ffffff" /></label><button id="pf-undo">↩</button><button id="pf-clear">✕</button><button id="pf-freeze" class="secondary">⏸</button></div><div class="draw-actions" style="margin-top:8px"><label>Guardar: <input id="pf-template-name" type="text" placeholder="Nombre" /><button id="pf-save" class="secondary">Guardar</button></label></div><div id="pf-templates"></div></section></main><footer></footer>`;
+    this.#root.appendChild(ws);
+    this.#root.querySelector("#home-link")?.addEventListener("click", (e) => { e.preventDefault(); this.#navigate("home"); });
+    const preview = ws.querySelector("#camera-preview");
+    const drawOverlay = ws.querySelector("#draw-overlay");
+    const fitCanvas = () => { const r = preview.getBoundingClientRect(); const dpr = window.devicePixelRatio || 1; drawOverlay.width = Math.round(r.width * dpr); drawOverlay.height = Math.round(r.height * dpr); drawOverlay.style.width = r.width + "px"; drawOverlay.style.height = r.height + "px"; };
+    new ResizeObserver(fitCanvas).observe(preview);
+    const tool = new DrawTool(drawOverlay);
+    this.#camera.attachPreview(preview);
+    ws.querySelector("#camera-toggle").addEventListener("click", () => {
+      if (this.#camera.isRunning) { this.#camera.stop(); drawOverlay.hidden = true; return; }
+      this.#camera.start({});
+    });
+    this.#events.on("camera.ready", () => { drawOverlay.hidden = false; fitCanvas(); });
+    ws.querySelector("#pf-video-file").addEventListener("change", async (e) => {
+      const f = e.target.files?.[0];
+      if (f) { this.#camera.stop(); preview.src = URL.createObjectURL(f); preview.play(); drawOverlay.hidden = false; setTimeout(fitCanvas, 100); }
+    });
+    ws.querySelectorAll(".draw-tool").forEach((b) => b.addEventListener("click", () => { ws.querySelectorAll(".draw-tool").forEach((x) => x.classList.remove("active")); b.classList.add("active"); tool.setTool(b.dataset.tool); }));
+    ws.querySelector("#pf-draw-color").addEventListener("input", (e) => tool.setColor(e.target.value));
+    ws.querySelector("#pf-undo").addEventListener("click", () => tool.undo());
+    ws.querySelector("#pf-clear").addEventListener("click", () => tool.clear());
+    ws.querySelector("#pf-freeze").addEventListener("click", () => { preview.pause(); });
+    ws.querySelector("#pf-save").addEventListener("click", () => { const name = ws.querySelector("#pf-template-name").value.trim(); if (name) { tool.saveTemplate(name); ws.querySelector("#pf-template-name").value = ""; } });
   }
 
   #syncSetup() {
@@ -156,17 +198,17 @@ export class App {
           <p class="lead" style="max-width:500px;margin:1em auto">Procesamiento 100% local. El video nunca sale de este dispositivo.</p>
         </section>
         <div class="home-cards">
-          <button class="home-card" data-nav="workspace">
+          <button class="home-card" data-view="match">
             <span class="home-card-icon">🎥</span>
             <strong>Nuevo Partido</strong>
-            <span>Análisis en vivo o video grabado con detección de jugadores, posesión y mapa táctico.</span>
+            <span>Análisis en vivo o video grabado con detección, posesión y mapa táctico.</span>
           </button>
-          <button class="home-card" data-nav="workspace">
+          <button class="home-card" data-view="history">
             <span class="home-card-icon">📋</span>
             <strong>Historial</strong>
             <span>Sesiones guardadas con estadísticas, eventos e insights tácticos.</span>
           </button>
-          <button class="home-card" data-nav="workspace">
+          <button class="home-card" data-view="practice">
             <span class="home-card-icon">✎</span>
             <strong>Práctica Táctica</strong>
             <span>Dibujo de jugadas sobre video congelado. Crea y guarda plantillas tácticas.</span>
@@ -174,7 +216,7 @@ export class App {
         </div>
       </main>
       <footer>OpenMatch AI · MVP local-first · <span id="pwa-state">Comprobando modo offline…</span></footer>`;
-    this.#root.querySelectorAll("[data-nav]").forEach((btn) => btn.addEventListener("click", () => this.#navigate("workspace")));
+    this.#root.querySelectorAll("[data-view]").forEach((btn) => btn.addEventListener("click", () => this.#navigate(btn.dataset.view)));
   }
 
   #workspaceHTML() {
@@ -289,7 +331,7 @@ export class App {
               <summary>Colores de equipos</summary>
               <div class="team-config" style="margin-top:6px"><label>A <input id="sl-color-a" type="color" value="#3da5ff" /></label><label>B <input id="sl-color-b" type="color" value="#ff6b6b" /></label><label>Balón <input id="sl-color-ball" type="color" value="#f5c518" /></label></div>
             </details>
-            <button id="setup-start" class="primary" style="width:100%;margin-top:16px" disabled>Comenzar</button>
+            <button id="setup-start" class="primary" style="width:100%;margin-top:16px">Comenzar</button>
           </div>
         </aside>
         <aside class="summary-overlay" id="summary-overlay" hidden>

@@ -73,6 +73,14 @@ export class App {
     }
   }
 
+  #setPhase(phase) {
+    this.#root.querySelector("#setup-overlay").hidden = phase !== "setup";
+    this.#root.querySelector("#summary-overlay").hidden = phase !== "summary";
+    const content = this.#root.querySelector("#workspace-content");
+    content.style.opacity = phase === "setup" ? "0.15" : "1";
+    content.style.pointerEvents = phase === "setup" ? "none" : "auto";
+  }
+
   #initWorkspace() {
     const ws = document.createElement("div");
     ws.className = "workspace-screen";
@@ -86,12 +94,56 @@ export class App {
     this.#insights = new InsightPanel(this.#root, this.#events, this.#store);
     this.#bindControls();
     this.#restoreSettings();
+    this.#setPhase("setup");
     getDeviceProfile().then((profile) => {
-      const btn = this.#root.querySelector(`[data-mode="${profile.recommendedMode}"]`);
-      if (btn) { this.#root.querySelector(".mode.active")?.classList.remove("active"); btn.classList.add("active"); }
-      this.#events.emit("device.ready", profile);
-      this.#events.emit("settings.modeChanged", { mode: profile.recommendedMode });
+      const sel = this.#root.querySelector("#setup-overlay");
+      sel.querySelectorAll(".mode").forEach((b) => b.classList.toggle("active", b.dataset.mode === profile.recommendedMode));
+      this.#syncSetup();
     });
+    const setupOverlay = this.#root.querySelector("#setup-overlay");
+    setupOverlay.querySelectorAll(".mode").forEach((btn) => btn.addEventListener("click", () => {
+      setupOverlay.querySelectorAll(".mode").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      this.#syncSetup();
+    }));
+    setupOverlay.querySelectorAll(".field-type").forEach((btn) => btn.addEventListener("click", () => {
+      setupOverlay.querySelectorAll(".field-type").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      this.#syncSetup();
+    }));
+    const syncField = () => this.#syncSetup();
+    setupOverlay.querySelector("#sl-field-length").addEventListener("input", syncField);
+    setupOverlay.querySelector("#sl-field-width").addEventListener("input", syncField);
+    setupOverlay.querySelector("#setup-start").addEventListener("click", () => {
+      this.#syncSetup();
+      this.#setPhase("analysis");
+    });
+    this.#root.querySelector("#summary-new").addEventListener("click", () => { this.#navigate("home"); this.#navigate("workspace"); });
+    this.#root.querySelector("#summary-home").addEventListener("click", () => this.#navigate("home"));
+  }
+
+  #syncSetup() {
+    const overlay = this.#root.querySelector("#setup-overlay");
+    const mode = overlay.querySelector(".mode.active")?.dataset.mode || "balanced";
+    const ftype = overlay.querySelector(".field-type.active")?.dataset.type || "football11";
+    const length = Number(overlay.querySelector("#sl-field-length").value) || 105;
+    const width = Number(overlay.querySelector("#sl-field-width").value) || 68;
+    const colors = {
+      teamA: overlay.querySelector("#sl-color-a").value,
+      teamB: overlay.querySelector("#sl-color-b").value,
+      ball: overlay.querySelector("#sl-color-ball").value,
+    };
+    const ws = this.#root.querySelector("#workspace-content");
+    ws.querySelectorAll(".mode").forEach((b) => b.classList.toggle("active", b.dataset.mode === mode));
+    ws.querySelectorAll(".field-type").forEach((b) => b.classList.toggle("active", b.dataset.type === ftype));
+    ws.querySelector("#field-length").value = length;
+    ws.querySelector("#field-width").value = width;
+    ws.querySelector("#color-team-a").value = colors.teamA;
+    ws.querySelector("#color-team-b").value = colors.teamB;
+    ws.querySelector("#color-ball").value = colors.ball;
+    this.#events.emit("settings.teamColors", colors);
+    this.#events.emit("settings.modeChanged", { mode });
+    this.#tactical?.refreshFieldType(ftype, { length, width });
   }
 
   #renderHome() {
@@ -132,104 +184,130 @@ export class App {
     return `
       <header class="topbar">
         <a class="brand" href="#" id="home-link" aria-label="Volver al inicio"><span class="brand-mark">←</span>Inicio</a>
-        <div class="privacy"><span></span> Procesamiento 100% local</div>
+        <div class="phase-bar">
+          <button class="phase-step active" data-phase="setup"><span class="phase-num">1</span> Configuración</button>
+          <button class="phase-step" data-phase="analysis" disabled><span class="phase-num">2</span> Análisis</button>
+          <button class="phase-step" data-phase="summary" disabled><span class="phase-num">3</span> Resumen</button>
+        </div>
+        <div class="privacy"><span></span> Local</div>
       </header>
       <main class="workspace">
-        <section class="hero panel">
-          <p class="eyebrow">PLATAFORMA TÁCTICA · ANÁLISIS LOCAL</p>
-          <h1>Tu partido, entendido<br />desde la cancha.</h1>
-          <p class="lead">Configura la captura. El video nunca sale de este dispositivo.</p>
-          <div class="mode-picker" role="group" aria-label="Modo de procesamiento">
-            <button class="mode active" data-mode="balanced">Balanceado <small>Recomendado</small></button>
-            <button class="mode" data-mode="saver">Ahorro</button>
-            <button class="mode" data-mode="performance">Rendimiento</button>
-            <button class="mode" data-mode="precision">Precisión</button>
-          </div>
-        </section>
-        <section class="capture panel">
-          <div class="section-heading"><div><p class="eyebrow">NUEVO PARTIDO</p><h2>Fuente de video</h2></div><span id="source-status" class="status">Sin conectar</span></div>
-          <div class="source-picker" role="group" aria-label="Origen del video">
-            <button class="source active" data-source="camera">Cámara en directo</button>
-            <button class="source" data-source="file">Video grabado</button>
-          </div>
-          <div class="video-stage" id="video-stage">
-            <video id="camera-preview" autoplay playsinline muted></video>
-            <canvas id="analysis-overlay" aria-label="Detecciones locales de visión artificial"></canvas>
-            <canvas id="field-overlay" aria-label="Calibración manual de cancha"></canvas>
-            <canvas id="draw-overlay" aria-label="Dibujo táctico" hidden></canvas>
-            <div class="video-empty" id="video-empty"><span class="camera-icon">⌁</span><strong>La cámara está lista cuando tú lo estés</strong><p>Conecta una cámara del dispositivo o una webcam USB.</p></div>
-            <div class="overlay-label">LIVE <span></span> LOCAL</div>
-          </div>
-          <div class="camera-controls">
-            <label class="select-wrap">Cámara <select id="camera-select" disabled><option>Buscando dispositivos…</option></select></label>
-            <label class="select-wrap">Calidad <select id="quality-select"><option value="720">720p · 30 FPS</option><option value="1080">1080p · 30 FPS</option><option value="480">480p · Ahorro</option></select></label>
-            <button id="camera-toggle" class="primary">Iniciar cámara</button>
-            <button id="analysis-toggle" class="secondary" disabled>Iniciar análisis</button>
-          </div>
-          <div class="event-marker" id="event-marker" hidden>
-            <button class="event-btn goal" data-event="goal" title="Marcar gol">⚽ Gol</button>
-            <button class="event-btn fault" data-event="fault" title="Marcar falta">🚩 Falta</button>
-            <button class="event-btn offside" data-event="offside" title="Marcar fuera de juego">🚦 Offside</button>
-            <button class="event-btn chance" data-event="chance" title="Marcar ocasión de gol">🎯 Ocasión</button>
-            <button class="event-btn card" data-event="yellow" title="Marcar tarjeta">🟨 Tarjeta</button>
-            <div class="event-feedback" id="event-feedback" hidden><ol class="event-feedback-list" id="event-list"></ol></div>
-          </div>
-          <div class="field-controls">
-            <div class="field-type-picker" role="group" aria-label="Tipo de cancha">
-              <button class="field-type active" data-type="football11">Fútbol 11</button>
-              <button class="field-type" data-type="football7">Fútbol 7</button>
+        <div class="workspace-content" id="workspace-content">
+          <section class="hero panel">
+            <p class="eyebrow">ANÁLISIS</p>
+            <h1>Tu partido, entendido<br />desde la cancha.</h1>
+            <p class="lead">Procesamiento 100% local.</p>
+          </section>
+          <section class="capture panel">
+            <div class="section-heading"><div><p class="eyebrow">NUEVO PARTIDO</p><h2>Fuente de video</h2></div><span id="source-status" class="status">Sin conectar</span></div>
+            <div class="source-picker" role="group" aria-label="Origen del video">
+              <button class="source active" data-source="camera">Cámara en directo</button>
+              <button class="source" data-source="file">Video grabado</button>
+            </div>
+            <div class="video-stage" id="video-stage">
+              <video id="camera-preview" autoplay playsinline muted></video>
+              <canvas id="analysis-overlay" aria-label="Detecciones"></canvas>
+              <canvas id="field-overlay" aria-label="Calibración"></canvas>
+              <canvas id="draw-overlay" aria-label="Dibujo" hidden></canvas>
+              <div class="video-empty" id="video-empty"><span class="camera-icon">⌁</span><strong>Conecta una cámara o selecciona un video</strong></div>
+              <div class="overlay-label">LOCAL</div>
+            </div>
+            <div class="camera-controls">
+              <label class="select-wrap">Cámara <select id="camera-select" disabled><option>Buscando dispositivos…</option></select></label>
+              <label class="select-wrap">Calidad <select id="quality-select"><option value="720">720p</option><option value="1080">1080p</option><option value="480">480p</option></select></label>
+              <button id="camera-toggle" class="primary">Iniciar cámara</button>
+              <button id="analysis-toggle" class="secondary" disabled>Iniciar análisis</button>
+            </div>
+            <div class="event-marker" id="event-marker" hidden>
+              <button class="event-btn goal" data-event="goal">⚽ Gol</button>
+              <button class="event-btn fault" data-event="fault">🚩 Falta</button>
+              <button class="event-btn offside" data-event="offside">🚦 Offside</button>
+              <button class="event-btn chance" data-event="chance">🎯 Ocasión</button>
+              <button class="event-btn card" data-event="yellow">🟨 Tarjeta</button>
+              <div class="event-feedback" id="event-feedback" hidden><ol class="event-feedback-list" id="event-list"></ol></div>
+            </div>
+            <div class="field-controls">
+              <div class="field-type-picker" role="group" aria-label="Tipo de cancha">
+                <button class="field-type active" data-type="football11">Fútbol 11</button>
+                <button class="field-type" data-type="football7">Fútbol 7</button>
+                <button class="field-type" data-type="baby">Baby</button>
+                <button class="field-type" data-type="futsal">Futsal</button>
+              </div>
+              <label class="select-wrap">Largo (m)<input id="field-length" type="number" min="20" max="130" value="105" /></label>
+              <label class="select-wrap">Ancho (m)<input id="field-width" type="number" min="15" max="100" value="68" /></label>
+              <button id="field-toggle" class="secondary">Calibrar cancha</button>
+              <button id="draw-toggle" class="secondary">✎ Dibujo</button>
+            </div>
+            <div class="draw-controls" id="draw-controls" hidden>
+              <div class="draw-toolbar"><button class="draw-tool active" data-tool="arrow">→</button><button class="draw-tool" data-tool="line">╱</button><button class="draw-tool" data-tool="circle">○</button><button class="draw-tool" data-tool="text">T</button><button class="draw-tool" data-tool="free">✎</button><label class="draw-color"><input id="draw-color" type="color" value="#ffffff" /></label><button id="draw-undo">↩</button><button id="draw-clear">✕</button></div>
+              <div class="draw-actions"><button id="draw-freeze" class="secondary">⏸</button><label class="draw-save"><input id="draw-template-name" type="text" placeholder="Nombre" /><button id="draw-save-btn" class="secondary">Guardar</button></label></div>
+              <div id="draw-templates"></div>
+            </div>
+            <details class="training-settings">
+              <summary>Equipos</summary>
+              <div class="team-config"><label>A <input id="color-team-a" type="color" value="#3da5ff" /></label><label>B <input id="color-team-b" type="color" value="#ff6b6b" /></label><label>Balón <input id="color-ball" type="color" value="#f5c518" /></label></div>
+            </details>
+            <div id="file-controls" class="file-controls" hidden>
+              <label class="file-picker" for="video-file"><span>Seleccionar video</span><input id="video-file" type="file" accept="video/*" /></label>
+              <p id="file-name" class="file-name">El archivo permanece en el dispositivo.</p>
+            </div>
+            <p id="camera-message" class="message" aria-live="polite">Conecta una cámara o selecciona un video.</p>
+          </section>
+          <section class="tactical panel">
+            <div class="section-heading"><div><p class="eyebrow">VISTA TÁCTICA</p><h2>Cancha en vivo</h2></div><div class="heading-actions"><span id="field-status" class="status">Sin calibrar</span><div class="view-toggle"><button class="view active" data-view="tactical">Táctica</button><button class="view" data-view="heatmap">Calor</button></div></div></div>
+            <div id="tactical-stage" class="tactical-stage">
+              <canvas id="tactical-field"></canvas>
+              <canvas id="heatmap-field"></canvas>
+            </div>
+            <div class="tactical-legend">
+              <span><i class="dot team-a"></i>A</span>
+              <span><i class="dot team-b"></i>B</span>
+              <span><i class="dot ball"></i>Balón</span>
+            </div>
+          </section>
+          <aside class="sidebar"><div id="dashboard"></div><div id="history"></div><div id="insights"></div></aside>
+        </div>
+        <aside class="setup-overlay" id="setup-overlay">
+          <div class="setup-card">
+            <p class="eyebrow">BIENVENIDO</p>
+            <h3 style="margin:6px 0 4px">Configuración del partido</h3>
+            <p style="color:var(--muted);font-size:.78rem;margin:0 0 18px">Ajusta los parámetros antes de empezar.</p>
+            <div class="mode-picker" role="group" aria-label="Modo">
+              <button class="mode active" data-mode="balanced">Balanceado</button>
+              <button class="mode" data-mode="performance">Rendimiento</button>
+              <button class="mode" data-mode="precision">Precisión</button>
+              <button class="mode" data-mode="saver">Ahorro</button>
+            </div>
+            <div class="field-type-picker" role="group" style="margin-top:12px">
+              <button class="field-type active" data-type="football11">F11</button>
+              <button class="field-type" data-type="football7">F7</button>
               <button class="field-type" data-type="baby">Baby</button>
               <button class="field-type" data-type="futsal">Futsal</button>
             </div>
-            <label class="select-wrap">Largo (m)<input id="field-length" type="number" min="20" max="130" value="105" /></label>
-            <label class="select-wrap">Ancho (m)<input id="field-width" type="number" min="15" max="100" value="68" /></label>
-            <button id="field-toggle" class="secondary" disabled>Calibrar cancha</button>
-            <button id="draw-toggle" class="secondary" disabled>✎ Dibujo táctico</button>
-          </div>
-          <div class="draw-controls" id="draw-controls" hidden>
-            <div class="draw-toolbar" role="group" aria-label="Herramientas de dibujo táctico">
-              <button class="draw-tool active" data-tool="arrow" title="Flecha">→</button>
-              <button class="draw-tool" data-tool="line" title="Línea">╱</button>
-              <button class="draw-tool" data-tool="circle" title="Círculo">○</button>
-              <button class="draw-tool" data-tool="text" title="Texto">T</button>
-              <button class="draw-tool" data-tool="free" title="Mano alzada">✎</button>
-              <label class="draw-color" title="Color"><input id="draw-color" type="color" value="#ffffff" /></label>
-              <button id="draw-undo" title="Deshacer">↩</button>
-              <button id="draw-clear" title="Limpiar todo">✕</button>
+            <div style="display:flex;gap:10px;margin-top:12px">
+              <label class="select-wrap"><small>Largo</small><input id="sl-field-length" type="number" value="105" /></label>
+              <label class="select-wrap"><small>Ancho</small><input id="sl-field-width" type="number" value="68" /></label>
             </div>
-            <div class="draw-actions">
-              <button id="draw-freeze" class="secondary">Congelar video</button>
-              <label class="draw-save">Guardar: <input id="draw-template-name" type="text" placeholder="Nombre de la jugada" /><button id="draw-save-btn" class="secondary">Guardar</button></label>
+            <details style="margin-top:10px;font-size:.78rem;color:var(--muted)">
+              <summary>Colores de equipos</summary>
+              <div class="team-config" style="margin-top:6px"><label>A <input id="sl-color-a" type="color" value="#3da5ff" /></label><label>B <input id="sl-color-b" type="color" value="#ff6b6b" /></label><label>Balón <input id="sl-color-ball" type="color" value="#f5c518" /></label></div>
+            </details>
+            <button id="setup-start" class="primary" style="width:100%;margin-top:16px" disabled>Comenzar</button>
+          </div>
+        </aside>
+        <aside class="summary-overlay" id="summary-overlay" hidden>
+          <div class="summary-card">
+            <p class="eyebrow">RESUMEN</p>
+            <h3 style="margin:6px 0 12px">Partido finalizado</h3>
+            <div id="summary-stats"></div>
+            <div id="summary-events"></div>
+            <div id="summary-insights"></div>
+            <div style="display:flex;gap:10px;margin-top:16px">
+              <button id="summary-new" class="primary" style="flex:1">Nuevo partido</button>
+              <button id="summary-home" class="secondary" style="flex:1">Inicio</button>
             </div>
-            <div id="draw-templates"></div>
           </div>
-          <details class="training-settings">
-            <summary>Configuración de equipos</summary>
-            <div class="team-config">
-              <label>Equipo A <input id="color-team-a" type="color" value="#3da5ff" /></label>
-              <label>Equipo B <input id="color-team-b" type="color" value="#ff6b6b" /></label>
-              <label>Balón <input id="color-ball" type="color" value="#f5c518" /></label>
-            </div>
-          </details>
-          <div id="file-controls" class="file-controls" hidden>
-            <label class="file-picker" for="video-file"><span>Seleccionar video</span><input id="video-file" type="file" accept="video/*" /></label>
-            <p id="file-name" class="file-name">Formatos compatibles con tu navegador. El archivo permanece en este dispositivo.</p>
-          </div>
-          <p id="camera-message" class="message" aria-live="polite">Permite el acceso a la cámara para empezar.</p>
-        </section>
-        <section class="tactical panel">
-          <div class="section-heading"><div><p class="eyebrow">VISTA TACTICA</p><h2>Cancha en vivo</h2></div><div class="heading-actions"><span id="field-status" class="status">Sin calibrar</span><div class="view-toggle"><button class="view active" data-view="tactical">Tactica</button><button class="view" data-view="heatmap">Calor</button></div></div></div>
-          <div id="tactical-stage" class="tactical-stage">
-            <canvas id="tactical-field" aria-label="Proyeccion tactica de jugadores y balon"></canvas>
-            <canvas id="heatmap-field" aria-label="Mapa de calor de posiciones de jugadores"></canvas>
-          </div>
-          <div class="tactical-legend">
-            <span><i class="dot team-a"></i>Equipo A</span>
-            <span><i class="dot team-b"></i>Equipo B</span>
-            <span><i class="dot ball"></i>Balon</span>
-          </div>
-        </section>
-        <aside class="sidebar"><div id="dashboard"></div><div id="history"></div><div id="insights"></div></aside>
+        </aside>
       </main>
       <footer>OpenMatch AI · MVP local-first · <span id="pwa-state">Comprobando modo offline…</span></footer>`;
   }
@@ -345,6 +423,10 @@ export class App {
     this.#unsubscribers.push(this.#events.on("analysis.stopped", () => {
       analysisToggle.textContent = "Iniciar análisis";
       eventMarker.hidden = true;
+    }));
+    this.#unsubscribers.push(this.#events.on("session.saved", (event) => {
+      this.#setPhase("summary");
+      this.#renderSummary(event.detail);
     }));
     this.#unsubscribers.push(this.#events.on("analysis.error", (event) => {
       analysisToggle.textContent = "Iniciar análisis";
@@ -472,7 +554,7 @@ export class App {
       eventFeedback.hidden = false;
       eventList.scrollTop = eventList.scrollHeight;
     }));
-    this.#unsubscribers.push(this.#events.on("analysis.stopped", () => { eventFeedback.hidden = true; eventList.innerHTML = ""; }));
+    this.#unsubscribers.push(this.#events.on("session.saved", () => { eventFeedback.hidden = true; eventList.innerHTML = ""; }));
     this.#renderTemplateList();
       }
     });
@@ -576,6 +658,31 @@ export class App {
 
   #destroy() {
     this.#destroyModules();
+  }
+
+  #renderSummary(session) {
+    const stats = this.#root.querySelector("#summary-stats");
+    const events = this.#root.querySelector("#summary-events");
+    const insights = this.#root.querySelector("#summary-insights");
+    const dur = Math.round(session.durationMs / 1000);
+    const mins = Math.floor(dur / 60);
+    const secs = dur % 60;
+    stats.innerHTML = `<dl class="session-stats">
+      <div><dt>Duración</dt><dd>${mins}m ${secs}s</dd></div>
+      <div><dt>Modo</dt><dd>${session.mode}</dd></div>
+      <div><dt>Distancia</dt><dd>${session.distance.toFixed(0)} m</dd></div>
+      <div><dt>Vel. máxima</dt><dd>${session.maxSpeed.toFixed(1)} m/s</dd></div>
+      ${session.possession != null ? `<div><dt>Posesión A</dt><dd>${session.possession}%</dd></div>` : ""}
+      ${session.teamDistanceA != null ? `<div><dt>Dist. A</dt><dd>${session.teamDistanceA.toFixed(0)} m</dd></div>` : ""}
+      ${session.teamDistanceB != null ? `<div><dt>Dist. B</dt><dd>${session.teamDistanceB.toFixed(0)} m</dd></div>` : ""}
+    </dl>`;
+    const evs = session.events || [];
+    events.innerHTML = evs.length ? `<h4>Eventos (${evs.length})</h4><ol class="event-list">${evs.map((ev) => {
+      const sec = Math.round(ev.timestamp / 1000);
+      return `<li><time>${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}</time> ${ev.label}</li>`;
+    }).join("")}</ol>` : "";
+    const ins = session.insights || [];
+    insights.innerHTML = ins.length ? `<h4>Insights</h4><ul class="insight-list">${ins.map((t) => `<li>${t}</li>`).join("")}</ul>` : "";
   }
 
   #renderTemplateList() {

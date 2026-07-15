@@ -813,6 +813,20 @@ export class App {
       const sec = Math.round(ev.timestamp / 1000);
       return `<li><time>${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}</time> ${ev.label}</li>`;
     }).join("")}</ol>` : "";
+    const players = session.playerStats || [];
+    if (players.length) {
+      const bestDist = players.reduce((m, p) => Math.max(m, p.distance), 0);
+      const bestSpeed = players.reduce((m, p) => Math.max(m, p.maxSpeed), 0);
+      let html = `<h4>Jugadores (${players.length})</h4><table class="player-table"><thead><tr><th>#</th><th>Distancia</th><th>Vel. media</th><th>Vel. máx</th></tr></thead><tbody>`;
+      players.sort((a, b) => b.distance - a.distance).forEach((p, i) => {
+        const isBestDist = p.distance === bestDist;
+        const isBestSpeed = p.maxSpeed === bestSpeed;
+        html += `<tr${isBestDist ? ' class="best-dist"' : ""}${isBestSpeed ? ' class="best-speed"' : ""}><td>${i + 1}</td><td>${p.distance}m${isBestDist ? " 🏆" : ""}</td><td>${p.avgSpeed} m/s</td><td>${p.maxSpeed} m/s${isBestSpeed ? " 🏆" : ""}</td></tr>`;
+      });
+      html += "</tbody></table>";
+      const target = this.#root.querySelector("#summary-events");
+      if (target) target.insertAdjacentHTML("afterend", `<div id="summary-players">${html}</div>`);
+    }
     const ins = session.insights || [];
     insights.innerHTML = ins.length ? `<h4>Insights</h4><ul class="insight-list">${ins.map((t) => `<li>${t}</li>`).join("")}</ul>` : "";
   }

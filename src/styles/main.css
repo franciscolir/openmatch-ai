@@ -100,7 +100,12 @@
 .setup-card .team-row input[type="text"] { flex:1; padding:8px 10px; border:1px solid var(--line); border-radius:6px; background:#111a2a; color:var(--text); font-size:.82rem; }
 .setup-card .team-row input[type="color"] { width:34px; height:34px; padding:1px; border:1px solid var(--line); border-radius:5px; background:transparent; cursor:pointer; }
 .summary-card { max-width:480px; width:100%; max-height:80vh; overflow-y:auto; padding:28px; border:1px solid var(--line); border-radius:18px; background:var(--panel); box-shadow:0 18px 55px rgba(0,0,0,.4); }
-.summary-card { max-width:480px; max-height:80vh; overflow-y:auto; }
+.player-table { width:100%; border-collapse:collapse; margin-top:8px; font-size:.72rem; }
+.player-table th { text-align:left; padding:6px 4px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600; }
+.player-table td { padding:5px 4px; border-bottom:1px solid rgba(255,255,255,.04); }
+.player-table .best-dist td { color:#3da5ff; }
+.player-table .best-speed td { color:#ff6b6b; }
+.summary-card { max-width:580px; max-height:80vh; overflow-y:auto; }
 .home-screen { max-width:780px; margin:0 auto; padding:24px 32px; }
 .home-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:20px; }
 .home-card { display:flex; flex-direction:column; gap:10px; padding:28px 22px; border:1px solid var(--line); border-radius:16px; background:linear-gradient(145deg,rgba(20,30,48,.91),rgba(12,18,31,.9)); cursor:pointer; text-align:left; color:var(--text); transition:border-color .15s; }

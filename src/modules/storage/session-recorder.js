@@ -12,6 +12,7 @@ export class SessionRecorder {
   #distance = 0;
   #teamDistance = { a: 0, b: 0 };
   #lastPositions = new Map();
+  #playerStats = new Map();
   #unsubscribers = [];
 
   constructor(events, store) {
@@ -40,6 +41,7 @@ export class SessionRecorder {
     this.#lastPossessionTs = 0;
     this.#teamDistance = { a: 0, b: 0 };
     this.#lastPositions.clear();
+    this.#playerStats.clear();
   }
 
   get sessionStartedAt() { return this.#current?.startedAt; }
@@ -78,6 +80,12 @@ export class SessionRecorder {
       if (last) {
         const delta = Math.hypot(track.fieldPosition.x - last.x, track.fieldPosition.y - last.y);
         this.#teamDistance[last.x < mid ? "a" : "b"] += delta;
+        const ps = this.#playerStats.get(track.id) || { id: track.id, distance: 0, maxSpeed: 0, speeds: [] };
+        ps.distance += delta;
+        const speed = track.speed || 0;
+        if (speed > ps.maxSpeed) ps.maxSpeed = speed;
+        ps.speeds.push(speed);
+        this.#playerStats.set(track.id, ps);
       }
       this.#lastPositions.set(track.id, track.fieldPosition);
     }
@@ -95,7 +103,13 @@ export class SessionRecorder {
       teamDistanceA: this.#teamDistance.a,
       teamDistanceB: this.#teamDistance.b,
       possession: total ? Math.round((this.#possession.a / total) * 100) : null,
-      insights: []
+      insights: [],
+      playerStats: [...this.#playerStats.values()].map((p) => ({
+        id: p.id,
+        distance: Math.round(p.distance),
+        maxSpeed: Math.round(p.maxSpeed * 10) / 10,
+        avgSpeed: p.speeds.length ? Math.round((p.distance / ((Date.now() - this.#current.startedAt) / 1000)) * 10) / 10 : 0,
+      })),
     };
     try {
       session.insights = generateInsights(session);

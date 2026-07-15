@@ -154,30 +154,112 @@ export class App {
   #initPracticeView() {
     const ws = document.createElement("div");
     ws.className = "workspace-screen";
-    ws.innerHTML = `<header class="topbar"><a class="brand" href="#" id="home-link"><span class="brand-mark">←</span>Inicio</a><div class="privacy">Práctica Táctica</div></header><main class="workspace" style="grid-template-columns:1fr"><section class="capture panel"><div class="section-heading"><h2>Dibujo táctico</h2></div><div class="video-stage" id="video-stage"><video id="camera-preview" autoplay playsinline muted></video><canvas id="draw-overlay" hidden></canvas><div class="video-empty"><span class="camera-icon">⌁</span><strong>Conecta una cámara o selecciona un video</strong></div></div><div class="camera-controls"><label class="select-wrap">Cámara <select id="camera-select"><option>Seleccionar cámara</option></select></label><button id="camera-toggle" class="primary">Iniciar cámara</button></div><div id="file-controls" class="file-controls"><label class="file-picker" for="pf-video-file"><span>Seleccionar video</span><input id="pf-video-file" type="file" accept="video/*" /></label></div><div class="draw-toolbar" style="margin-top:12px"><button class="draw-tool active" data-tool="arrow">→</button><button class="draw-tool" data-tool="line">╱</button><button class="draw-tool" data-tool="circle">○</button><button class="draw-tool" data-tool="text">T</button><button class="draw-tool" data-tool="free">✎</button><label><input id="pf-draw-color" type="color" value="#ffffff" /></label><button id="pf-undo">↩</button><button id="pf-clear">✕</button><button id="pf-freeze" class="secondary">⏸</button></div><div class="draw-actions" style="margin-top:8px"><label>Guardar: <input id="pf-template-name" type="text" placeholder="Nombre" /><button id="pf-save" class="secondary">Guardar</button></label></div><div id="pf-templates"></div></section></main><footer></footer>`;
+    ws.innerHTML = `
+      <header class="fixed top-0 w-full z-50 flex justify-between items-center px-8 h-16" style="background:#051426;border-bottom:1px solid #424935">
+        <div class="flex items-center gap-4">
+          <button id="pp-home" class="material-symbols-outlined" style="color:#aff73f;cursor:pointer;font-size:24px">arrow_back</button>
+          <span style="color:#ffffff;font-family:Inter;font-size:20px;font-weight:600">OpenMatch AI</span>
+          <span class="px-2 py-0.5 rounded text-[10px] font-bold tracking-widest" style="background:#aff73f;color:#213600">PRO</span>
+        </div>
+        <span class="text-sm hidden md:block" style="color:#c2cab0">Procesamiento 100% local</span>
+      </header>
+      <main style="padding-top:80px;padding-bottom:48px;padding-left:24px;padding-right:24px;max-width:1200px;margin:0 auto" class="md:pl-[272px]">
+        <div class="space-y-6">
+          <div class="relative w-full rounded-xl overflow-hidden border" style="aspect-ratio:16/9;border-color:#424935;background:#010e21">
+            <video id="pp-video" autoplay playsinline muted class="absolute inset-0 w-full h-full" style="object-fit:contain"></video>
+            <canvas id="pp-canvas" class="absolute inset-0 w-full h-full" style="cursor:crosshair;z-index:10"></canvas>
+            <div class="absolute inset-0 flex items-center justify-center" id="pp-empty">
+              <div class="text-center" style="color:#c2cab0"><span class="material-symbols-outlined" style="color:#aff73f;font-size:4rem">sports_soccer</span><p class="mt-2">Conecta una cámara o selecciona un video</p></div>
+            </div>
+            <div class="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex gap-1 p-1 rounded-full shadow-2xl" style="background:rgba(16,24,39,.8);backdrop-filter:blur(12px);border:1px solid #263148">
+              <button class="pp-tool p-2 rounded-full transition-all" data-tool="arrow" style="color:#c2cab0"><span class="material-symbols-outlined">trending_flat</span></button>
+              <button class="pp-tool p-2 rounded-full transition-all" data-tool="line" style="color:#c2cab0"><span class="material-symbols-outlined">horizontal_rule</span></button>
+              <button class="pp-tool p-2 rounded-full transition-all active" data-tool="circle" style="color:#aff73f;background:#283549"><span class="material-symbols-outlined">radio_button_unchecked</span></button>
+              <button class="pp-tool p-2 rounded-full transition-all" data-tool="text" style="color:#c2cab0"><span class="material-symbols-outlined">title</span></button>
+              <button class="pp-tool p-2 rounded-full transition-all" data-tool="free" style="color:#c2cab0"><span class="material-symbols-outlined">edit</span></button>
+              <div style="width:1px;height:32px;background:#424935;margin:0 4px"></div>
+              <label class="p-2 rounded-full transition-all cursor-pointer" title="Color"><input id="pp-color" type="color" value="#aff73f" style="width:24px;height:24px;padding:0;border:2px solid rgba(255,255,255,.2);border-radius:50%;cursor:pointer;display:block" /></label>
+              <div style="width:1px;height:32px;background:#424935;margin:0 4px"></div>
+              <button id="pp-undo" class="p-2 rounded-full transition-all" style="color:#c2cab0"><span class="material-symbols-outlined">undo</span></button>
+              <button id="pp-clear" class="p-2 rounded-full transition-all" style="color:#c2cab0"><span class="material-symbols-outlined">delete_sweep</span></button>
+            </div>
+            <div class="absolute bottom-0 w-full p-4 flex items-center gap-4" style="background:linear-gradient(to top,rgba(0,0,0,.8),transparent)">
+              <button id="pp-freeze" class="material-symbols-outlined transition-colors" style="color:#ffffff;font-variation-settings:'FILL'1">play_arrow</button>
+              <div class="flex-grow h-1 rounded-full relative" style="background:rgba(255,255,255,.2)">
+                <div id="pp-progress" class="absolute left-0 top-0 h-full rounded-full" style="width:33%;background:#aff73f"></div>
+                <div class="absolute left-1/3 -top-1.5 w-4 h-4 rounded-full shadow-lg border-2 border-white" style="background:#aff73f"></div>
+              </div>
+              <span id="pp-time" class="text-white" style="font-family:monospace;font-size:.8rem">00:00 / 00:00</span>
+            </div>
+          </div>
+          <div class="flex flex-wrap justify-between items-center gap-4">
+            <div class="flex gap-4">
+              <button id="pp-freeze-btn" class="flex items-center gap-2 px-6 py-3 rounded-lg border transition-all" style="background:#283549;border-color:#424935;color:#d5e3fd"><span class="material-symbols-outlined" style="color:#aff73f">pause_circle</span> Congelar video</button>
+              <button id="pp-save-btn" class="flex items-center gap-2 px-6 py-3 rounded-lg transition-all" style="background:#aff73f;color:#213600;font-weight:600"><span class="material-symbols-outlined">save</span> Guardar plantilla</button>
+            </div>
+            <div class="flex items-center gap-3 p-3 rounded-xl" style="background:rgba(16,24,39,.8);border:1px solid #263148">
+              <span class="material-symbols-outlined" style="color:#c2cab0">speed</span>
+              <label style="color:#c2cab0;font-size:.85rem"><input id="pp-template-name" type="text" placeholder="Nombre de la jugada" style="background:transparent;border:1px solid #424935;border-radius:6px;padding:6px 10px;color:#ffffff;font-size:.85rem;min-width:150px" /></label>
+            </div>
+          </div>
+          <div style="padding-top:24px;border-top:1px solid #424935">
+            <div class="flex items-center justify-between mb-4">
+              <h2 style="color:#ffffff;font-size:1.3rem;font-weight:600">Plantillas Guardadas</h2>
+            </div>
+            <div id="pp-templates" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+          </div>
+        </div>
+      </main>
+      <footer class="w-full py-4 px-8 flex flex-col md:flex-row justify-between items-center border-t" style="background:#010e21;border-color:#424935;color:#c2cab0;font-size:.82rem">
+        <span>© 2024 OpenMatch AI. Análisis táctico privado.</span>
+      </footer>`;
     this.#root.appendChild(ws);
-    this.#root.querySelector("#home-link")?.addEventListener("click", (e) => { e.preventDefault(); this.#navigate("home"); });
-    const preview = ws.querySelector("#camera-preview");
-    const drawOverlay = ws.querySelector("#draw-overlay");
-    const fitCanvas = () => { const r = preview.getBoundingClientRect(); const dpr = window.devicePixelRatio || 1; drawOverlay.width = Math.round(r.width * dpr); drawOverlay.height = Math.round(r.height * dpr); drawOverlay.style.width = r.width + "px"; drawOverlay.style.height = r.height + "px"; };
-    new ResizeObserver(fitCanvas).observe(preview);
-    const tool = new DrawTool(drawOverlay);
-    this.#camera.attachPreview(preview);
-    ws.querySelector("#camera-toggle").addEventListener("click", () => {
-      if (this.#camera.isRunning) { this.#camera.stop(); drawOverlay.hidden = true; return; }
-      this.#camera.start({});
+    this.#root.querySelector("#pp-home")?.addEventListener("click", () => this.#navigate("home"));
+    const video = ws.querySelector("#pp-video");
+    const canvas = ws.querySelector("#pp-canvas");
+    const empty = ws.querySelector("#pp-empty");
+    const fit = () => { const r = video.getBoundingClientRect(); const dpr = window.devicePixelRatio || 1; if (r.width && r.height) { canvas.width = Math.round(r.width * dpr); canvas.height = Math.round(r.height * dpr); } };
+    new ResizeObserver(fit).observe(video.parentElement);
+    const tool = new DrawTool(canvas, () => {});
+    this.#camera.attachPreview(video);
+    this.#camera.refreshDevices().then((devices) => {
+      const sel = ws.querySelector("#pp-camera-select") || document.createElement("select"); // hidden fallback
     });
-    this.#events.on("camera.ready", () => { drawOverlay.hidden = false; fitCanvas(); });
-    ws.querySelector("#pf-video-file").addEventListener("change", async (e) => {
-      const f = e.target.files?.[0];
-      if (f) { this.#camera.stop(); preview.src = URL.createObjectURL(f); preview.play(); drawOverlay.hidden = false; setTimeout(fitCanvas, 100); }
+    ws.querySelectorAll(".pp-tool").forEach((b) => b.addEventListener("click", () => {
+      ws.querySelectorAll(".pp-tool").forEach((x) => { x.style.color = "#c2cab0"; x.style.background = "transparent"; });
+      b.style.color = "#aff73f"; b.style.background = "#283549"; tool.setTool(b.dataset.tool);
+    }));
+    ws.querySelector("#pp-color")?.addEventListener("input", (e) => tool.setColor(e.target.value));
+    ws.querySelector("#pp-undo")?.addEventListener("click", () => tool.undo());
+    ws.querySelector("#pp-clear")?.addEventListener("click", () => tool.clear());
+    const freezeBtn = ws.querySelector("#pp-freeze");
+    const freezeBtn2 = ws.querySelector("#pp-freeze-btn");
+    const toggleFreeze = () => { video.pause(); freezeBtn.textContent = "play_arrow"; };
+    freezeBtn?.addEventListener("click", toggleFreeze);
+    freezeBtn2?.addEventListener("click", toggleFreeze);
+    ws.querySelector("#pp-save-btn")?.addEventListener("click", () => {
+      const name = ws.querySelector("#pp-template-name")?.value?.trim();
+      if (name) { tool.saveTemplate(name); ws.querySelector("#pp-template-name").value = ""; tool.saveTemplate(name); }
     });
-    ws.querySelectorAll(".draw-tool").forEach((b) => b.addEventListener("click", () => { ws.querySelectorAll(".draw-tool").forEach((x) => x.classList.remove("active")); b.classList.add("active"); tool.setTool(b.dataset.tool); }));
-    ws.querySelector("#pf-draw-color").addEventListener("input", (e) => tool.setColor(e.target.value));
-    ws.querySelector("#pf-undo").addEventListener("click", () => tool.undo());
-    ws.querySelector("#pf-clear").addEventListener("click", () => tool.clear());
-    ws.querySelector("#pf-freeze").addEventListener("click", () => { preview.pause(); });
-    ws.querySelector("#pf-save").addEventListener("click", () => { const name = ws.querySelector("#pf-template-name").value.trim(); if (name) { tool.saveTemplate(name); ws.querySelector("#pf-template-name").value = ""; } });
+    const renderTemplates = () => {
+      const container = ws.querySelector("#pp-templates");
+      const templates = tool.getTemplates();
+      container.innerHTML = templates.map((t) =>
+        `<div class="group cursor-pointer">
+          <div class="aspect-video rounded-lg overflow-hidden border flex items-center justify-center mb-1" style="border-color:#424935;background:#122033">
+            <div class="flex items-center justify-center w-full h-full hover:scale-105 transition-transform" style="cursor:pointer">
+              <span class="material-symbols-outlined" style="color:#aff73f;font-size:2rem">edit_note</span>
+            </div>
+          </div>
+          <p style="color:#ffffff;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.name}</p>
+          <p style="color:#c2cab0;font-size:.75rem">${new Date(t.createdAt).toLocaleDateString()}</p>
+        </div>`
+      ).join("");
+    };
+    renderTemplates();
+    // Re-render on save (the save button triggers after saveTemplate)
+    const origSave = tool.saveTemplate.bind(tool);
+    tool.saveTemplate = (name) => { const r = origSave(name); renderTemplates(); return r; };
   }
 
   #syncSetup() {

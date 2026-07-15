@@ -374,6 +374,15 @@ export class App {
           </div>
         </aside>
       </main>
+      <div class="bottom-bar" id="bottom-bar">
+        <div class="bottom-left">
+          <button id="btn-flip" class="bottom-btn" title="Cambiar cámara">🔄</button>
+          <select id="bottom-quality" class="bottom-select"><option value="1080">1080p</option><option value="720" selected>720p</option><option value="480">480p</option></select>
+        </div>
+        <div class="bottom-right">
+          <button id="btn-settings" class="bottom-btn" title="Configuración">⚙️</button>
+        </div>
+      </div>
       <footer>OpenMatch AI · MVP local-first · <span id="pwa-state">Comprobando modo offline…</span></footer>`;
   }
 
@@ -565,6 +574,18 @@ export class App {
     }));
     this.#unsubscribers.push(this.#events.on("settings.modeChanged", (event) => { this.#store.saveSetting("mode", event.detail.mode).catch(() => {}); }));
     this.#unsubscribers.push(this.#events.on("field.calibrated", (event) => { this.#store.saveSetting("field", event.detail.dimensions).catch(() => {}); }));
+    const bottomQuality = this.#root.querySelector("#bottom-quality");
+    const mainQuality = this.#root.querySelector("#quality-select");
+    if (bottomQuality && mainQuality) {
+      bottomQuality.addEventListener("change", () => { mainQuality.value = bottomQuality.value; });
+      mainQuality.addEventListener("change", () => { bottomQuality.value = mainQuality.value; });
+    }
+    this.#root.querySelector("#btn-flip")?.addEventListener("click", () => {
+      const sel = this.#root.querySelector("#camera-select");
+      const idx = sel?.selectedIndex ?? 0;
+      if (sel && sel.options.length > 1) { sel.selectedIndex = (idx + 1) % sel.options.length; this.#camera.start({ deviceId: sel.value }).catch(() => {}); }
+    });
+    this.#root.querySelector("#btn-settings")?.addEventListener("click", () => this.#setPhase("setup"));
     const fieldTypeButtons = this.#root.querySelectorAll(".field-type");
     const updateFieldType = (type) => {
       this.#fieldCalibration.setFieldType(type);

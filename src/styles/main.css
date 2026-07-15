@@ -130,4 +130,9 @@
 .team-config { display:flex; gap:12px; padding:8px 0; flex-wrap:wrap; }
 .team-config label { display:flex; align-items:center; gap:6px; font-size:.72rem; flex:1; min-width:120px; }
 .team-config input[type="color"] { width:36px; height:30px; padding:1px; border:1px solid var(--line); border-radius:5px; background:transparent; cursor:pointer; }
+.bottom-bar { display:flex; align-items:center; justify-content:space-between; padding:8px 16px; background:rgba(16,24,39,.95); border-top:1px solid var(--line); grid-column:1 / -1; margin-top:auto; }
+.bottom-left, .bottom-right { display:flex; gap:8px; align-items:center; }
+.bottom-btn { width:36px; height:36px; border:1px solid var(--line); border-radius:8px; background:transparent; color:var(--muted); font-size:1rem; cursor:pointer; display:grid; place-items:center; }
+.bottom-btn:hover { border-color:var(--accent); color:var(--text); }
+.bottom-select { padding:6px 8px; border:1px solid var(--line); border-radius:6px; background:#111a2a; color:var(--text); font-size:.72rem; }
 @media (max-width:590px) { .field-controls { flex-wrap:wrap; }.field-controls .select-wrap { min-width:42%; }.field-controls .secondary { width:100%; } }

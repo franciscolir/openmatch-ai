@@ -113,6 +113,7 @@ export class App {
             <div class="field-type-picker" role="group" aria-label="Tipo de cancha">
               <button class="field-type active" data-type="football11">Fútbol 11</button>
               <button class="field-type" data-type="football7">Fútbol 7</button>
+              <button class="field-type" data-type="baby">Baby</button>
               <button class="field-type" data-type="futsal">Futsal</button>
             </div>
             <label class="select-wrap">Largo (m)<input id="field-length" type="number" min="20" max="130" value="105" /></label>
@@ -272,7 +273,7 @@ export class App {
     const fieldTypeButtons = this.#root.querySelectorAll(".field-type");
     const updateFieldType = (type) => {
       this.#fieldCalibration.setFieldType(type);
-      const defaults = { football11: { length: 105, width: 68 }, football7: { length: 50, width: 30 }, futsal: { length: 40, width: 20 } };
+      const defaults = { football11: { length: 105, width: 68 }, football7: { length: 50, width: 30 }, baby: { length: 36, width: 18 }, futsal: { length: 40, width: 20 } };
       const dims = defaults[type] || defaults.football11;
       this.#root.querySelector("#field-length").value = dims.length;
       this.#root.querySelector("#field-width").value = dims.width;

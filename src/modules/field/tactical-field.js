@@ -14,12 +14,20 @@ const FIELD_TYPES = {
     },
   },
   football7: {
-    label: "Fútbol 7 / Baby",
+    label: "Fútbol 7",
     defaultLength: 50,
     defaultWidth: 30,
     markings: {
       centerCircle: 6,
-      areaLineDist: 10,
+      areaDepth: 8,
+    },
+  },
+  baby: {
+    label: "Baby Fútbol",
+    defaultLength: 36,
+    defaultWidth: 18,
+    markings: {
+      areaLineDist: 7,
     },
   },
   futsal: {
@@ -141,8 +149,10 @@ export class TacticalField {
     ctx.moveTo(halfW, 0);
     ctx.lineTo(halfW, h);
     ctx.stroke();
-    if (this.#fieldType === "football11" || this.#fieldType === "football7") {
-      const cr = FIELD_TYPES[this.#fieldType].markings.centerCircle;
+    const hasCircle = (this.#fieldType === "football11" || this.#fieldType === "football7" || this.#fieldType === "futsal");
+    const hasPoint = (this.#fieldType === "baby");
+    if (hasCircle) {
+      const cr = FIELD_TYPES[this.#fieldType]?.markings?.centerCircle || FIELD_TYPES.football11.markings.centerCircle;
       ctx.beginPath();
       ctx.arc(halfW, halfH, m(cr), 0, Math.PI * 2);
       ctx.stroke();
@@ -151,14 +161,10 @@ export class TacticalField {
       ctx.arc(halfW, halfH, m(0.3), 0, Math.PI * 2);
       ctx.fill();
     }
-    if (this.#fieldType === "futsal") {
-      const cr = FIELD_TYPES.futsal.markings.centerCircle;
-      ctx.beginPath();
-      ctx.arc(halfW, halfH, m(cr), 0, Math.PI * 2);
-      ctx.stroke();
+    if (hasPoint) {
       ctx.fillStyle = "rgba(255,255,255,.85)";
       ctx.beginPath();
-      ctx.arc(halfW, halfH, m(0.15), 0, Math.PI * 2);
+      ctx.arc(halfW, halfH, m(0.3), 0, Math.PI * 2);
       ctx.fill();
     }
     if (this.#fieldType === "football11") {
@@ -167,8 +173,8 @@ export class TacticalField {
       this.#drawRectArea(ctx, w, p.penaltyAreaDepth, p.penaltyAreaWidth, w, h);
       this.#drawRectArea(ctx, 0, p.goalAreaDepth, p.goalAreaWidth, w, h);
       this.#drawRectArea(ctx, w, p.goalAreaDepth, p.goalAreaWidth, w, h);
-      const spotY = halfH;
       ctx.fillStyle = "rgba(255,255,255,.7)";
+      const spotY = halfH;
       const penaltySpotX = m(p.penaltySpot);
       ctx.beginPath();
       ctx.arc(penaltySpotX, spotY, m(0.15), 0, Math.PI * 2);
@@ -184,14 +190,19 @@ export class TacticalField {
       ctx.stroke();
     }
     if (this.#fieldType === "football7") {
-      const dist = m(FIELD_TYPES.football7.markings.areaLineDist);
+      const d = m(FIELD_TYPES.football7.markings.areaDepth);
+      ctx.strokeRect(0, 0, d, h);
+      ctx.strokeRect(w - d, 0, d, h);
+    }
+    if (this.#fieldType === "baby") {
+      const d = m(FIELD_TYPES.baby.markings.areaLineDist);
       ctx.beginPath();
-      ctx.moveTo(dist, 0);
-      ctx.lineTo(dist, h);
+      ctx.moveTo(d, 0);
+      ctx.lineTo(d, h);
       ctx.stroke();
       ctx.beginPath();
-      ctx.moveTo(w - dist, 0);
-      ctx.lineTo(w - dist, h);
+      ctx.moveTo(w - d, 0);
+      ctx.lineTo(w - d, h);
       ctx.stroke();
     }
     if (this.#fieldType === "futsal") {

@@ -96,8 +96,9 @@ export class App {
     this.#history = new HistoryPanel(this.#root, this.#events, this.#store);
     this.#insights = new InsightPanel(this.#root, this.#events, this.#store);
     this.#bindControls();
-    this.#root.querySelector("#summary-new").addEventListener("click", () => { this.#navigate("home"); this.#navigate("match"); });
-    this.#root.querySelector("#summary-home").addEventListener("click", () => this.#navigate("home"));
+    this.#restoreSettings();
+    this.#root.querySelector("#summary-new")?.addEventListener("click", () => { this.#navigate("home"); this.#navigate("match"); });
+    this.#root.querySelector("#summary-home")?.addEventListener("click", () => this.#navigate("home"));
   }
 
   #initHistoryView() {

@@ -94,51 +94,6 @@ export class App {
     this.#history = new HistoryPanel(this.#root, this.#events, this.#store);
     this.#insights = new InsightPanel(this.#root, this.#events, this.#store);
     this.#bindControls();
-    this.#restoreSettings();
-    this.#setPhase("setup");
-    const setupOverlay = this.#root.querySelector("#setup-overlay");
-    const validateForm = () => {
-      const teamA = setupOverlay.querySelector("#sl-team-a-name").value.trim();
-      const teamB = setupOverlay.querySelector("#sl-team-b-name").value.trim();
-      const dur = Number(setupOverlay.querySelector("#sl-duration").value);
-      const players = Number(setupOverlay.querySelector("#sl-players").value);
-      setupOverlay.querySelector("#setup-start").disabled = !teamA || !teamB || !dur || !players || dur < 20 || dur > 120 || players < 5 || players > 11;
-    };
-    getDeviceProfile().then((profile) => {
-      setupOverlay.querySelectorAll(".mode").forEach((b) => b.classList.toggle("active", b.dataset.mode === profile.recommendedMode));
-    });
-    (async () => {
-      const saved = await this.#store.loadSetting("matchConfig");
-      if (saved) {
-        setupOverlay.querySelector("#sl-team-a-name").value = saved.teamA?.name || "";
-        setupOverlay.querySelector("#sl-team-b-name").value = saved.teamB?.name || "";
-        setupOverlay.querySelector("#sl-team-a-color").value = saved.teamA?.color || "#3da5ff";
-        setupOverlay.querySelector("#sl-team-b-color").value = saved.teamB?.color || "#ff6b6b";
-        setupOverlay.querySelector("#sl-ball-color").value = saved.ballColor || "#f5c518";
-        setupOverlay.querySelector("#sl-duration").value = saved.duration || 90;
-        setupOverlay.querySelector("#sl-players").value = saved.players || 11;
-        if (saved.mode) setupOverlay.querySelectorAll(".mode").forEach((b) => b.classList.toggle("active", b.dataset.mode === saved.mode));
-        if (saved.fieldType) setupOverlay.querySelectorAll(".field-type").forEach((b) => b.classList.toggle("active", b.dataset.type === saved.fieldType));
-        if (saved.length) setupOverlay.querySelector("#sl-field-length").value = saved.length;
-        if (saved.width) setupOverlay.querySelector("#sl-field-width").value = saved.width;
-      }
-      this.#syncSetup();
-      validateForm();
-    })();
-    setupOverlay.querySelectorAll(".mode, .field-type").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const parent = btn.closest(".mode-picker, .field-type-picker");
-        if (parent) { parent.querySelectorAll(".mode, .field-type").forEach((b) => b.classList.remove("active")); btn.classList.add("active"); }
-        this.#syncSetup();
-        validateForm();
-      });
-    });
-    setupOverlay.querySelectorAll("input").forEach((el) => el.addEventListener("input", () => { this.#syncSetup(); validateForm(); }));
-    setupOverlay.querySelector("#setup-start").addEventListener("click", () => {
-      if (setupOverlay.querySelector("#setup-start").disabled) return;
-      this.#syncSetup();
-      this.#setPhase("analysis");
-    });
     this.#root.querySelector("#summary-new").addEventListener("click", () => { this.#navigate("home"); this.#navigate("match"); });
     this.#root.querySelector("#summary-home").addEventListener("click", () => this.#navigate("home"));
   }
@@ -855,7 +810,7 @@ export class App {
       const idx = sel?.selectedIndex ?? 0;
       if (sel && sel.options.length > 1) { sel.selectedIndex = (idx + 1) % sel.options.length; this.#camera.start({ deviceId: sel.value }).catch(() => {}); }
     });
-    this.#root.querySelector("#btn-settings")?.addEventListener("click", () => this.#setPhase("setup"));
+    this.#root.querySelector("#btn-settings")?.addEventListener("click", () => this.#navigate("home"));
     const fieldTypeButtons = this.#root.querySelectorAll(".field-type");
     const updateFieldType = (type) => {
       this.#fieldCalibration.setFieldType(type);

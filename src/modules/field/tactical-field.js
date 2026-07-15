@@ -20,6 +20,7 @@ const FIELD_TYPES = {
     markings: {
       centerCircle: 6,
       areaDepth: 8,
+      areaWidth: 26,
     },
   },
   baby: {
@@ -190,9 +191,9 @@ export class TacticalField {
       ctx.stroke();
     }
     if (this.#fieldType === "football7") {
-      const d = m(FIELD_TYPES.football7.markings.areaDepth);
-      ctx.strokeRect(0, 0, d, h);
-      ctx.strokeRect(w - d, 0, d, h);
+      const p = FIELD_TYPES.football7.markings;
+      this.#drawRectArea(ctx, 0, p.areaDepth, p.areaWidth, w, h);
+      this.#drawRectArea(ctx, w, p.areaDepth, p.areaWidth, w, h);
     }
     if (this.#fieldType === "baby") {
       const d = m(FIELD_TYPES.baby.markings.areaLineDist);

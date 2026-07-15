@@ -1111,6 +1111,7 @@ export class App {
 
   async #registerServiceWorker() {
     const state = this.#root.querySelector("#pwa-state");
+    if (!state) return;
     if (!import.meta.env || import.meta.env.DEV) {
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker.getRegistrations().then((registrations) => registrations.forEach((registration) => registration.unregister())).catch(() => {});

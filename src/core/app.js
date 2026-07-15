@@ -88,7 +88,6 @@ export class App {
     this.#root.appendChild(ws);
     const homeLink = this.#root.querySelector("#home-link");
     if (homeLink) homeLink.addEventListener("click", (e) => { e.preventDefault(); this.#navigate("home"); });
-    this.#dashboard = new Dashboard(this.#root, this.#events);
     this.#recorder = new SessionRecorder(this.#events, this.#store);
     this.#history = new HistoryPanel(this.#root, this.#events, this.#store);
     this.#insights = new InsightPanel(this.#root, this.#events, this.#store);
@@ -725,17 +724,28 @@ export class App {
     this.#events.on("camera.ready", () => { mainState = "calibrate"; updateMain(); });
     this.#events.on("video.loaded", () => { mainState = "calibrate"; updateMain(); });
     this.#events.on("field.calibrated", () => { mainState = "ready"; updateMain(); });
+    const updateTelemetry = () => {
+      const v = this.#root.querySelector("#camera-preview");
+      if (v?.videoWidth) {
+        this.#root.querySelector("#dash-resolution").textContent = v.videoWidth + "x" + v.videoHeight;
+        this.#root.querySelector("#dash-fps").textContent = (v.dataset?.fps || "") || "—";
+      }
+    };
     this.#events.on("analysis.ready", () => {
       mainState = "running"; updateMain(); startTimer();
-      this.#root.querySelector("#match-bar").hidden = false;
+      this.#root.querySelector("#match-bar") && (this.#root.querySelector("#match-bar").hidden = false);
+      updateTelemetry();
     });
     this.#events.on("analysis.stopped", () => {
       mainState = "finalize"; updateMain(); stopTimer();
     });
     this.#events.on("field.calibrationStarted", resetTimer);
     this.#events.on("tracking.updated", (ev) => {
-      const ball = (ev.detail.tracks || []).find((t) => t.label === "sports ball" && t.fieldPosition);
-      const players = (ev.detail.tracks || []).filter((t) => t.label === "person" && t.fieldPosition);
+      const tracks = ev.detail.tracks || [];
+      this.#root.querySelector("#dash-tracks") && (this.#root.querySelector("#dash-tracks").textContent = tracks.filter((t) => t.label === "person").length + " P");
+      this.#root.querySelector("#dash-speed") && (this.#root.querySelector("#dash-speed").textContent = (ev.detail.metrics?.maxSpeed || "").toFixed(1) + " m/s" || "—");
+      const ball = tracks.find((t) => t.label === "sports ball" && t.fieldPosition);
+      const players = tracks.filter((t) => t.label === "person" && t.fieldPosition);
       if (ball && players.length) {
         const mid = this.#root.querySelector("#field-length")?.value || 105;
         const teamA = players.filter((p) => p.fieldPosition.x < mid / 2).length;

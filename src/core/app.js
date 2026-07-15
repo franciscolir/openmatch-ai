@@ -262,8 +262,7 @@ export class App {
             <div class="camera-controls">
               <label class="select-wrap">Cámara <select id="camera-select" disabled><option>Buscando dispositivos…</option></select></label>
               <label class="select-wrap">Calidad <select id="quality-select"><option value="720">720p</option><option value="1080">1080p</option><option value="480">480p</option></select></label>
-              <button id="camera-toggle" class="primary">Iniciar cámara</button>
-              <button id="analysis-toggle" class="secondary" disabled>Iniciar análisis</button>
+              <button id="main-action" class="primary" disabled>📷 Iniciar cámara</button>
             </div>
             <div class="event-marker" id="event-marker" hidden>
               <button class="event-btn goal" data-event="goal">⚽ Gol</button>
@@ -372,7 +371,6 @@ export class App {
   }
 
   #bindControls() {
-    const toggle = this.#root.querySelector("#camera-toggle");
     const select = this.#root.querySelector("#camera-select");
     const quality = this.#root.querySelector("#quality-select");
     const fileInput = this.#root.querySelector("#video-file");
@@ -380,7 +378,6 @@ export class App {
     const cameraControls = this.#root.querySelector(".camera-controls");
     const fileControls = this.#root.querySelector("#file-controls");
     const preview = this.#root.querySelector("#camera-preview");
-    const analysisToggle = this.#root.querySelector("#analysis-toggle");
     const fieldToggle = this.#root.querySelector("#field-toggle");
     this.#camera.attachPreview(preview);
     this.#videoFile.attachPreview(preview);
@@ -403,6 +400,46 @@ export class App {
     this.#fieldCalibration = new FieldCalibration(this.#events, this.#root.querySelector("#field-overlay"), preview);
     this.#metrics = new MetricsCalculator(this.#events);
     this.#tactical = new TacticalField(this.#events, this.#root.querySelector("#tactical-field"));
+    let mainState = "idle";
+    const mainBtn = this.#root.querySelector("#main-action");
+    const cameraSelect = this.#root.querySelector("#camera-select");
+    const qualSelect = this.#root.querySelector("#quality-select");
+    const updateMain = () => {
+      const texts = {
+        idle: "📷 Iniciar cámara",
+        calibrate: "📐 Calibrar cancha",
+        ready: "▶️ Iniciar análisis",
+        running: "⏸️ Pausar",
+        paused: "▶️ Reanudar",
+        finalize: "⏹️ Finalizar",
+      };
+      mainBtn.textContent = texts[mainState] || texts.idle;
+      mainBtn.disabled = mainState === "idle" && !this.#camera.isRunning && !this.#videoFile.isLoaded;
+    };
+    mainBtn.addEventListener("click", () => {
+      if (mainState === "idle") { this.#camera.start({ deviceId: cameraSelect.value, height: Number(qualSelect.value) }).catch(() => {}); }
+      else if (mainState === "calibrate") {
+        const dims = { length: Number(this.#root.querySelector("#field-length").value), width: Number(this.#root.querySelector("#field-width").value) };
+        this.#fieldCalibration.start(dims);
+        mainState = "ready"; updateMain();
+      }
+      else if (mainState === "ready") {
+        this.#analysis.start(this.#root.querySelector(".mode.active")?.dataset.mode || "balanced").catch(() => {});
+        mainState = "running"; updateMain();
+      }
+      else if (mainState === "running") { this.#analysis.stop(); mainState = "paused"; updateMain(); }
+      else if (mainState === "paused") {
+        this.#analysis.start(this.#root.querySelector(".mode.active")?.dataset.mode || "balanced").catch(() => {});
+        mainState = "finalize"; updateMain();
+      }
+      else if (mainState === "finalize") { this.#analysis.stop(); }
+    });
+    this.#events.on("camera.ready", () => { mainState = "calibrate"; updateMain(); });
+    this.#events.on("video.loaded", () => { mainState = "calibrate"; updateMain(); });
+    this.#events.on("field.calibrated", () => { mainState = "ready"; updateMain(); });
+    this.#events.on("analysis.ready", () => { mainState = "running"; updateMain(); });
+    this.#events.on("analysis.stopped", () => { mainState = "finalize"; updateMain(); });
+    updateMain();
     this.#heatmap = new Heatmap(this.#events, this.#root.querySelector("#heatmap-field"));
     const stage = this.#root.querySelector("#tactical-stage");
     this.#root.querySelectorAll(".view-toggle .view").forEach((button) => button.addEventListener("click", () => {
@@ -416,14 +453,6 @@ export class App {
       select.innerHTML = devices.length ? devices.map((device, index) => `<option value="${device.deviceId}">${device.label || `Cámara ${index + 1}`}</option>`).join("") : "<option>No se encontraron cámaras</option>";
       select.disabled = !devices.length;
     });
-    toggle.addEventListener("click", async () => {
-      if (this.#camera.isRunning) {
-        this.#analysis.stop();
-        this.#camera.stop();
-        return;
-      }
-      await this.#camera.start({ deviceId: select.value, height: Number(quality.value) });
-    });
     fileInput.addEventListener("change", async () => {
       const [file] = fileInput.files;
       if (!file) return;
@@ -432,8 +461,7 @@ export class App {
       await this.#videoFile.load(file);
     });
     this.#unsubscribers.push(this.#events.on("camera.ready", () => {
-      toggle.textContent = "Detener cámara";
-      analysisToggle.disabled = false;
+      mainBtn.disabled = false;
       fieldToggle.disabled = false;
       drawToggle.disabled = false;
       sourceStatus.textContent = "En directo";
@@ -442,8 +470,7 @@ export class App {
       this.#root.querySelector("#camera-message").textContent = "Captura activa: el procesamiento se realizará localmente.";
     }));
     this.#unsubscribers.push(this.#events.on("camera.stopped", () => {
-      toggle.textContent = "Iniciar cámara";
-      analysisToggle.disabled = true;
+      mainBtn.disabled = true;
       drawToggle.disabled = true;
       this.#analysis.stop();
       this.#fieldCalibration.cancel();
@@ -457,7 +484,7 @@ export class App {
     }));
     this.#unsubscribers.push(this.#events.on("video.loaded", (event) => {
       sourceStatus.textContent = "Video cargado";
-      analysisToggle.disabled = false;
+      mainBtn.disabled = false;
       fieldToggle.disabled = false;
       drawToggle.disabled = false;
       sourceStatus.classList.add("live");
@@ -468,27 +495,17 @@ export class App {
     this.#unsubscribers.push(this.#events.on("video.error", (event) => {
       this.#root.querySelector("#camera-message").textContent = event.detail.message;
     }));
-    this.#unsubscribers.push(this.#events.on("analysis.loading", (event) => {
-      analysisToggle.textContent = "Cargando…";
-      this.#root.querySelector("#camera-message").textContent = event.detail.message;
-    }));
     const eventMarker = this.#root.querySelector("#event-marker");
     this.#unsubscribers.push(this.#events.on("analysis.ready", () => {
-      analysisToggle.textContent = "Detener análisis";
-      analysisToggle.disabled = false;
       eventMarker.hidden = false;
-      this.#root.querySelector("#camera-message").textContent = "Análisis local activo: personas, balón y pose se procesan en este dispositivo.";
+      this.#root.querySelector("#camera-message").textContent = "Análisis local activo.";
     }));
-    this.#unsubscribers.push(this.#events.on("analysis.stopped", () => {
-      analysisToggle.textContent = "Iniciar análisis";
-      eventMarker.hidden = true;
-    }));
+    this.#unsubscribers.push(this.#events.on("analysis.stopped", () => { eventMarker.hidden = true; }));
     this.#unsubscribers.push(this.#events.on("session.saved", (event) => {
       this.#setPhase("summary");
       this.#renderSummary(event.detail);
     }));
     this.#unsubscribers.push(this.#events.on("analysis.error", (event) => {
-      analysisToggle.textContent = "Iniciar análisis";
       const detail = event.detail.detail ? ` (${event.detail.detail})` : "";
       this.#root.querySelector("#camera-message").textContent = `${event.detail.message}${detail}`;
     }));
@@ -514,15 +531,6 @@ export class App {
     }));
     this.#unsubscribers.push(this.#events.on("settings.modeChanged", (event) => { this.#store.saveSetting("mode", event.detail.mode).catch(() => {}); }));
     this.#unsubscribers.push(this.#events.on("field.calibrated", (event) => { this.#store.saveSetting("field", event.detail.dimensions).catch(() => {}); }));
-    analysisToggle.addEventListener("click", async () => {
-      if (this.#analysis.isRunning) {
-        this.#analysis.stop();
-        this.#overlay.clear();
-        return;
-      }
-      try { await this.#analysis.start(this.#root.querySelector(".mode.active").dataset.mode); }
-      catch (error) { this.#events.emit("analysis.error", { message: error.message }); }
-    });
     const fieldTypeButtons = this.#root.querySelectorAll(".field-type");
     const updateFieldType = (type) => {
       this.#fieldCalibration.setFieldType(type);

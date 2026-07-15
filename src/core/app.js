@@ -645,8 +645,9 @@ export class App {
         finalize: "⏹️ Finalizar",
       };
       if (mainBtn) {
-        mainBtn.textContent = texts[mainState] || texts.idle;
-        mainBtn.disabled = mainState === "idle" && !this.#camera.isRunning && !this.#videoFile.isLoaded;
+        const actionSpan = mainBtn.querySelector("#action-text");
+        if (actionSpan) actionSpan.textContent = texts[mainState] || texts.idle;
+        mainBtn.disabled = false;
       }
     };
     if (mainBtn) {
@@ -726,54 +727,33 @@ export class App {
       select.innerHTML = devices.length ? devices.map((device, index) => `<option value="${device.deviceId}">${device.label || `Cámara ${index + 1}`}</option>`).join("") : "<option>No se encontraron cámaras</option>";
       select.disabled = !devices.length;
     });
+    const $ = (id) => this.#root.querySelector(id);
     this.#unsubscribers.push(this.#events.on("camera.ready", () => {
-      mainBtn.disabled = false;
-      fieldToggle.disabled = false;
-      drawToggle.disabled = false;
-      sourceStatus.textContent = "En directo";
-      sourceStatus.classList.add("live");
-      this.#root.querySelector("#video-empty").hidden = true;
-      this.#root.querySelector("#camera-message").textContent = "Captura activa: el procesamiento se realizará localmente.";
+      if (fieldToggle) fieldToggle.disabled = false;
+      if ($("#draw-toggle")) $("#draw-toggle").disabled = false;
+      const empty = $("#video-empty");
+      if (empty) empty.hidden = true;
+      mainState = "calibrate"; updateMain();
     }));
     this.#unsubscribers.push(this.#events.on("camera.stopped", () => {
-      mainBtn.disabled = true;
-      drawToggle.disabled = true;
       this.#analysis.stop();
       this.#fieldCalibration.cancel();
       this.#overlay.clear();
-      sourceStatus.textContent = "Sin conectar";
-      sourceStatus.classList.remove("live");
-      this.#root.querySelector("#video-empty").hidden = false;
-    }));
-    this.#unsubscribers.push(this.#events.on("camera.error", (event) => {
-      this.#root.querySelector("#camera-message").textContent = event.detail.message;
+      const empty = $("#video-empty");
+      if (empty) empty.hidden = false;
     }));
     this.#unsubscribers.push(this.#events.on("video.loaded", (event) => {
-      sourceStatus.textContent = "Video cargado";
-      mainBtn.disabled = false;
-      fieldToggle.disabled = false;
-      drawToggle.disabled = false;
-      sourceStatus.classList.add("live");
-      this.#root.querySelector("#video-empty").hidden = true;
-      this.#root.querySelector("#file-name").textContent = `${event.detail.file.name} · ${event.detail.file.sizeLabel}`;
-      this.#root.querySelector("#camera-message").textContent = "Video listo para análisis local. La reproducción no envía el archivo a internet.";
-    }));
-    this.#unsubscribers.push(this.#events.on("video.error", (event) => {
-      this.#root.querySelector("#camera-message").textContent = event.detail.message;
+      const empty = $("#video-empty");
+      if (empty) empty.hidden = true;
     }));
     const eventMarker = this.#root.querySelector("#event-marker");
     this.#unsubscribers.push(this.#events.on("analysis.ready", () => {
-      eventMarker.hidden = false;
-      this.#root.querySelector("#camera-message").textContent = "Análisis local activo.";
+      if (eventMarker) eventMarker.hidden = false;
     }));
-    this.#unsubscribers.push(this.#events.on("analysis.stopped", () => { eventMarker.hidden = true; }));
+    this.#unsubscribers.push(this.#events.on("analysis.stopped", () => { if (eventMarker) eventMarker.hidden = true; }));
     this.#unsubscribers.push(this.#events.on("session.saved", (event) => {
       this.#setPhase("summary");
       this.#renderSummary(event.detail);
-    }));
-    this.#unsubscribers.push(this.#events.on("analysis.error", (event) => {
-      const detail = event.detail.detail ? ` (${event.detail.detail})` : "";
-      this.#root.querySelector("#camera-message").textContent = `${event.detail.message}${detail}`;
     }));
     this.#unsubscribers.push(this.#events.on("tracking.updated", (event) => { this.#tracks = event.detail.tracks; }));
     this.#unsubscribers.push(this.#events.on("ai.detected", (event) => this.#overlay.render(event.detail, this.#tracks)));

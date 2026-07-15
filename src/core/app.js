@@ -889,28 +889,36 @@ export class App {
       this.#fieldCalibration.start(dimensions);
     });
     const emitTeamColors = () => {
-      const colors = {
-        teamA: this.#root.querySelector("#color-team-a").value,
-        teamB: this.#root.querySelector("#color-team-b").value,
-        ball: this.#root.querySelector("#color-ball").value,
-      };
+      const aInput = this.#root.querySelector("#color-team-a");
+      const bInput = this.#root.querySelector("#color-team-b");
+      const ballInput = this.#root.querySelector("#color-ball");
+      if (!aInput || !bInput) return;
+      const colors = { teamA: aInput.value, teamB: bInput.value, ball: ballInput?.value || "#f5c518" };
       this.#events.emit("settings.teamColors", colors);
-      this.#root.querySelector(".dot.team-a").style.background = colors.teamA;
-      this.#root.querySelector(".dot.team-b").style.background = colors.teamB;
-      this.#root.querySelector(".dot.ball").style.background = colors.ball;
+      const dotA = this.#root.querySelector(".dot.team-a");
+      const dotB = this.#root.querySelector(".dot.team-b");
+      const dotBall = this.#root.querySelector(".dot.ball");
+      if (dotA) dotA.style.background = colors.teamA;
+      if (dotB) dotB.style.background = colors.teamB;
+      if (dotBall) dotBall.style.background = colors.ball;
       this.#store.saveSetting("teamColors", colors).catch(() => {});
     };
-    this.#root.querySelector("#color-team-a").addEventListener("input", emitTeamColors);
-    this.#root.querySelector("#color-team-b").addEventListener("input", emitTeamColors);
-    this.#root.querySelector("#color-ball").addEventListener("input", emitTeamColors);
+    const cA = this.#root.querySelector("#color-team-a");
+    const cB = this.#root.querySelector("#color-team-b");
+    const cBall = this.#root.querySelector("#color-ball");
+    if (cA) cA.addEventListener("input", emitTeamColors);
+    if (cB) cB.addEventListener("input", emitTeamColors);
+    if (cBall) cBall.addEventListener("input", emitTeamColors);
     const drawToggle = this.#root.querySelector("#draw-toggle");
     const drawControls = this.#root.querySelector("#draw-controls");
-    drawToggle.addEventListener("click", () => {
-      const isVisible = !drawControls.hidden;
-      drawControls.hidden = isVisible;
-      drawOverlay.hidden = isVisible;
-      drawToggle.textContent = isVisible ? "✎ Dibujo táctico" : "✕ Cerrar dibujo";
-    });
+    if (drawToggle && drawControls) {
+      drawToggle.addEventListener("click", () => {
+        const isVisible = !drawControls.hidden;
+        drawControls.hidden = isVisible;
+        if (drawOverlay) drawOverlay.hidden = isVisible;
+        drawToggle.textContent = isVisible ? "✎ Dibujo táctico" : "✕ Cerrar dibujo";
+      });
+    }
     this.#root.querySelectorAll(".draw-tool").forEach((btn) => btn.addEventListener("click", () => {
       this.#root.querySelectorAll(".draw-tool").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");

@@ -113,6 +113,13 @@ export class App {
             <button id="camera-toggle" class="primary">Iniciar cámara</button>
             <button id="analysis-toggle" class="secondary" disabled>Iniciar análisis</button>
           </div>
+          <div class="event-marker" id="event-marker" hidden>
+            <button class="event-btn goal" data-event="goal" title="Marcar gol">⚽ Gol</button>
+            <button class="event-btn fault" data-event="fault" title="Marcar falta">🚩 Falta</button>
+            <button class="event-btn offside" data-event="offside" title="Marcar fuera de juego">🚦 Offside</button>
+            <button class="event-btn chance" data-event="chance" title="Marcar ocasión de gol">🎯 Ocasión</button>
+            <button class="event-btn card" data-event="yellow" title="Marcar tarjeta">🟨 Tarjeta</button>
+          </div>
           <div class="field-controls">
             <div class="field-type-picker" role="group" aria-label="Tipo de cancha">
               <button class="field-type active" data-type="football11">Fútbol 11</button>
@@ -274,12 +281,17 @@ export class App {
       analysisToggle.textContent = "Cargando…";
       this.#root.querySelector("#camera-message").textContent = event.detail.message;
     }));
+    const eventMarker = this.#root.querySelector("#event-marker");
     this.#unsubscribers.push(this.#events.on("analysis.ready", () => {
       analysisToggle.textContent = "Detener análisis";
       analysisToggle.disabled = false;
+      eventMarker.hidden = false;
       this.#root.querySelector("#camera-message").textContent = "Análisis local activo: personas, balón y pose se procesan en este dispositivo.";
     }));
-    this.#unsubscribers.push(this.#events.on("analysis.stopped", () => { analysisToggle.textContent = "Iniciar análisis"; }));
+    this.#unsubscribers.push(this.#events.on("analysis.stopped", () => {
+      analysisToggle.textContent = "Iniciar análisis";
+      eventMarker.hidden = true;
+    }));
     this.#unsubscribers.push(this.#events.on("analysis.error", (event) => {
       analysisToggle.textContent = "Iniciar análisis";
       const detail = event.detail.detail ? ` (${event.detail.detail})` : "";
@@ -391,7 +403,10 @@ export class App {
       const name = this.#root.querySelector("#draw-template-name").value.trim();
       if (name && this.#drawTool.saveTemplate(name)) {
         this.#root.querySelector("#draw-template-name").value = "";
-        this.#renderTemplateList();
+    this.#root.querySelectorAll(".event-btn").forEach((btn) => btn.addEventListener("click", () => {
+      this.#recorder.markEvent(btn.dataset.event, btn.textContent.trim());
+    }));
+    this.#renderTemplateList();
       }
     });
     this.#renderTemplateList();

@@ -38,6 +38,14 @@
 #draw-templates { display:flex; gap:8px; flex-wrap:wrap; padding-top:8px; }
 #draw-templates button { padding:6px 10px; border:1px solid var(--line); border-radius:6px; background:transparent; color:var(--muted); font-size:.7rem; cursor:pointer; }
 #draw-templates button:hover { border-color:var(--accent); color:var(--accent); }
+.event-marker { display:flex; gap:6px; flex-wrap:wrap; padding-top:10px; }
+.event-btn { padding:8px 12px; border:1px solid var(--line); border-radius:7px; background:transparent; color:var(--text); font-size:.75rem; cursor:pointer; flex:1; min-width:70px; text-align:center; }
+.event-btn:hover { border-color:var(--accent); }
+.event-btn.goal { border-color:#f5c518; }
+.event-btn.fault { border-color:#ff6b6b; }
+.event-btn.offside { border-color:#ffa500; }
+.event-btn.chance { border-color:#3da5ff; }
+.event-btn.card { border-color:#ffd700; }
 @media (max-width:900px) { .workspace { grid-template-columns:1fr; }.sidebar { grid-column:1; grid-row:auto; display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }.dashboard { margin:0; }.topbar,.workspace,footer { padding-left:18px; padding-right:18px; } } @media (max-width:590px) { .privacy { display:none; }.hero { padding:28px 22px; }.capture { padding:16px; }.video-stage { min-height:260px; }.camera-controls { flex-wrap:wrap; }.select-wrap { min-width:42%; }.primary { width:100%; }.sidebar { grid-template-columns:1fr; } }
 
 .video-stage canvas { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }

@@ -33,13 +33,18 @@ export class SessionRecorder {
   }
 
   #start(mode) {
-    this.#current = { id: `session-${crypto.randomUUID()}`, startedAt: Date.now(), mode, field: null };
+    this.#current = { id: `session-${crypto.randomUUID()}`, startedAt: Date.now(), mode, field: null, events: [] };
     this.#maxSpeed = 0;
     this.#distance = 0;
     this.#possession = { a: 0, b: 0 };
     this.#lastPossessionTs = 0;
     this.#teamDistance = { a: 0, b: 0 };
     this.#lastPositions.clear();
+  }
+
+  markEvent(type, label) {
+    if (!this.#current) return;
+    this.#current.events.push({ type, label, timestamp: Date.now() - this.#current.startedAt });
   }
 
   #updateMetrics(detail) {

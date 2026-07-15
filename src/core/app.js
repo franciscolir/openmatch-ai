@@ -269,14 +269,6 @@ export class App {
               <label class="select-wrap">Calidad <select id="quality-select"><option value="720">720p</option><option value="1080">1080p</option><option value="480">480p</option></select></label>
               <button id="main-action" class="primary" disabled>📷 Iniciar cámara</button>
             </div>
-            <div class="event-marker" id="event-marker" hidden>
-              <button class="event-btn goal" data-event="goal">⚽ Gol</button>
-              <button class="event-btn fault" data-event="fault">🚩 Falta</button>
-              <button class="event-btn offside" data-event="offside">🚦 Offside</button>
-              <button class="event-btn chance" data-event="chance">🎯 Ocasión</button>
-              <button class="event-btn card" data-event="yellow">🟨 Tarjeta</button>
-              <div class="event-feedback" id="event-feedback" hidden><ol class="event-feedback-list" id="event-list"></ol></div>
-            </div>
             <div class="field-controls">
               <div class="field-type-picker" role="group" aria-label="Tipo de cancha">
                 <button class="field-type active" data-type="football11">Fútbol 11</button>
@@ -316,7 +308,17 @@ export class App {
               <span><i class="dot ball"></i>Balón</span>
             </div>
           </section>
-          <aside class="sidebar"><div id="dashboard"></div><div id="history"></div><div id="insights"></div></aside>
+          <aside class="sidebar">
+            <div class="event-marker" id="event-marker" hidden>
+              <button class="event-btn goal" data-event="goal">⚽ Gol</button>
+              <button class="event-btn fault" data-event="fault">🚩 Falta</button>
+              <button class="event-btn offside" data-event="offside">🚦 Offside</button>
+              <button class="event-btn chance" data-event="chance">🎯 Ocasión</button>
+              <button class="event-btn card" data-event="yellow">🟨 Tarjeta</button>
+              <div class="event-feedback" id="event-feedback" hidden><ol class="event-feedback-list" id="event-list"></ol></div>
+            </div>
+            <div id="dashboard"></div><div id="history"></div><div id="insights"></div>
+          </aside>
         <aside class="setup-overlay" id="setup-overlay">
           <div class="setup-card">
             <p class="eyebrow">NUEVO PARTIDO</p>

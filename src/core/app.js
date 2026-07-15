@@ -145,9 +145,36 @@ export class App {
   #initHistoryView() {
     const ws = document.createElement("div");
     ws.className = "workspace-screen";
-    ws.innerHTML = `<header class="topbar"><a class="brand" href="#" id="home-link"><span class="brand-mark">←</span>Inicio</a><div class="privacy">Historial</div></header><main class="workspace"><aside class="sidebar" style="grid-column:1/-1;max-width:600px;margin:0 auto"><div id="history"></div></aside></main><footer></footer>`;
+    ws.innerHTML = `
+      <header class="fixed top-0 w-full z-50 flex justify-between items-center px-8 h-16" style="background:#051426;border-bottom:1px solid #263148">
+        <div class="flex items-center gap-4">
+          <button id="hist-back" class="flex items-center gap-2 transition-colors" style="color:#c2cab0;cursor:pointer">
+            <span class="material-symbols-outlined">arrow_back</span>
+            <span style="font-size:1.25rem;font-weight:600;color:#ffffff">Inicio</span>
+          </button>
+        </div>
+        <span class="px-3 py-1 rounded-full text-xs font-bold tracking-widest" style="background:#122033;border:1px solid #263148;color:#c2cab0">Procesamiento 100% local</span>
+      </header>
+      <main style="padding-top:80px;padding-bottom:40px;padding-left:24px;padding-right:24px;max-width:1200px;margin:0 auto" class="md:ml-[240px]">
+        <header class="mb-6">
+          <h2 style="font-size:1.8rem;font-weight:600;color:#ffffff">Historial de Sesiones</h2>
+          <p style="color:#c2cab0;font-size:1rem">Analiza tus sesiones pasadas y el progreso táctico del equipo.</p>
+        </header>
+        <div id="history" class="space-y-4"></div>
+        <div class="mt-8 h-32 border-2 border-dashed rounded-xl flex flex-col items-center justify-center" style="border-color:#263148;color:#c2cab0">
+          <span class="material-symbols-outlined mb-2" style="font-size:2rem">cloud_sync</span>
+          <p style="font-size:.85rem">Todas las sesiones están sincronizadas localmente.</p>
+        </div>
+      </main>
+      <footer class="w-full py-4 px-8 flex flex-col md:flex-row justify-between items-center border-t gap-4" style="background:#010e21;border-color:#263148;color:#c2cab0;font-size:.82rem" class="md:ml-[240px]">
+        <span>© 2024 OpenMatch AI. Análisis táctico privado.</span>
+        <div class="flex gap-6">
+          <a style="color:#c2cab0;text-decoration:none" href="#">Privacy Policy</a>
+          <a style="color:#c2cab0;text-decoration:none" href="#">Terms</a>
+        </div>
+      </footer>`;
     this.#root.appendChild(ws);
-    this.#root.querySelector("#home-link")?.addEventListener("click", (e) => { e.preventDefault(); this.#navigate("home"); });
+    this.#root.querySelector("#hist-back")?.addEventListener("click", () => this.#navigate("home"));
     this.#history = new HistoryPanel(this.#root, this.#events, this.#store);
   }
 

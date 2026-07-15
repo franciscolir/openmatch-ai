@@ -106,14 +106,7 @@
 .player-table .best-dist td { color:#3da5ff; }
 .player-table .best-speed td { color:#ff6b6b; }
 .summary-card { max-width:580px; max-height:80vh; overflow-y:auto; }
-.home-screen { max-width:780px; margin:0 auto; padding:24px 32px; }
-.home-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:20px; }
-.home-card { display:flex; flex-direction:column; gap:10px; padding:28px 22px; border:1px solid var(--line); border-radius:16px; background:linear-gradient(145deg,rgba(20,30,48,.91),rgba(12,18,31,.9)); cursor:pointer; text-align:left; color:var(--text); transition:border-color .15s; }
-.home-card:hover { border-color:var(--accent); }
-.home-card-icon { font-size:2rem; }
-.home-card strong { font-size:1.05rem; }
-.home-card span { color:var(--muted); font-size:.78rem; line-height:1.45; }
-@media (max-width:640px) { .home-cards { grid-template-columns:1fr; } }
+/* home screen is now styled via Tailwind in the template */
 @media (max-width:900px) { .workspace { grid-template-columns:1fr; }.sidebar { grid-column:1; grid-row:auto; display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }.dashboard { margin:0; }.topbar,.workspace,footer { padding-left:18px; padding-right:18px; } } @media (max-width:590px) { .privacy { display:none; }.hero { padding:28px 22px; }.capture { padding:16px; }.video-stage { min-height:260px; }.camera-controls { flex-wrap:wrap; }.select-wrap { min-width:42%; }.primary { width:100%; }.sidebar { grid-template-columns:1fr; } }
 
 .video-stage canvas { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }

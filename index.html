@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es">
+<html class="dark" lang="es">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -7,10 +7,87 @@
     <meta name="description" content="Análisis táctico de fútbol, privado y ejecutado en tu navegador." />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./src/styles/main.css" />
     <title>OpenMatch AI</title>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-background": "#d5e3fd",
+              "on-tertiary-fixed-variant": "#434751",
+              "on-secondary-fixed": "#141c2b",
+              "on-primary-fixed-variant": "#324f00",
+              "primary-fixed": "#aff73f",
+              "tertiary-container": "#dfe2f0",
+              "on-surface-variant": "#c2cab0",
+              "surface-dim": "#051426",
+              "on-tertiary-container": "#606470",
+              "surface-container-high": "#1d2b3e",
+              "surface-container": "#122033",
+              "surface": "#051426",
+              "outline-variant": "#424935",
+              "tertiary": "#ffffff",
+              "outline": "#8c947c",
+              "on-tertiary-fixed": "#171c25",
+              "surface-container-highest": "#283549",
+              "error": "#ffb4ab",
+              "on-primary": "#213600",
+              "error-container": "#93000a",
+              "surface-bright": "#2c3a4e",
+              "primary-container": "#aff73f",
+              "surface-container-low": "#0e1c2f",
+              "primary": "#ffffff",
+              "on-secondary": "#293041",
+              "inverse-primary": "#446900",
+              "on-surface": "#d5e3fd",
+              "inverse-on-surface": "#233145",
+              "background": "#051426",
+              "secondary-fixed": "#dbe2f8",
+              "on-secondary-fixed-variant": "#3f4758",
+              "on-primary-container": "#486f00",
+              "secondary": "#bfc6db",
+              "on-error": "#690005",
+              "tertiary-fixed": "#dfe2f0",
+              "surface-variant": "#283549",
+              "primary-fixed-dim": "#94da1d",
+              "secondary-fixed-dim": "#bfc6db",
+              "tertiary-fixed-dim": "#c3c6d3",
+              "secondary-container": "#3f4758",
+              "surface-container-lowest": "#010e21",
+              "on-primary-fixed": "#111f00",
+              "inverse-surface": "#d5e3fd",
+              "on-secondary-container": "#adb5c9",
+              "surface-tint": "#94da1d",
+              "on-error-container": "#ffdad6",
+              "on-tertiary": "#2c303b"
+            },
+            fontFamily: { "headline-md": ["Inter"], "body-lg": ["Inter"], "label-caps": ["Inter"] },
+            fontSize: {
+              "headline-md": ["20px", { lineHeight: "28px", fontWeight: "600" }],
+              "display-lg": ["48px", { lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "700" }],
+              "headline-lg": ["32px", { lineHeight: "40px", letterSpacing: "-0.01em", fontWeight: "600" }],
+              "body-lg": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+              "body-sm": ["14px", { lineHeight: "20px", fontWeight: "400" }],
+              "label-caps": ["12px", { lineHeight: "16px", letterSpacing: "0.05em", fontWeight: "700" }],
+            },
+          },
+        },
+      }
+    </script>
+    <style>
+      .glass-panel { background: rgba(16, 24, 39, 0.8); backdrop-filter: blur(12px); border: 1px solid #263148; }
+      .lime-glow { box-shadow: 0 0 20px rgba(175, 247, 63, 0.15); }
+      .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+      .custom-scrollbar::-webkit-scrollbar-track { background: #051426; }
+      .custom-scrollbar::-webkit-scrollbar-thumb { background: #263148; border-radius: 10px; }
+    </style>
   </head>
-  <body>
+  <body class="bg-background text-on-background overflow-x-hidden">
     <noscript>OpenMatch AI requiere JavaScript para acceder a la cámara.</noscript>
     <div id="app"></div>
     <script type="module" src="./src/main.js"></script>

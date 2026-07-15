@@ -68,10 +68,9 @@ export class App {
     this.#root.querySelector(".workspace-screen")?.remove();
     this.#destroyModules();
     if (view === "home") {
-      this.#root.querySelector(".home-screen").hidden = false;
+      this.#renderHome();
       return;
     }
-    this.#root.querySelector(".home-screen").hidden = true;
     if (view === "match") this.#initMatchView();
     else if (view === "history") this.#initHistoryView();
     else if (view === "practice") this.#initPracticeView();
@@ -206,36 +205,209 @@ export class App {
 
   #renderHome() {
     this.#root.innerHTML = `
-      <header class="topbar">
-        <a class="brand" href="./" aria-label="OpenMatch AI, inicio"><span class="brand-mark">O</span>OpenMatch <b>AI</b></a>
-        <div class="privacy"><span></span> Procesamiento 100% local</div>
-      </header>
-      <main class="home-screen">
-        <section class="hero panel" style="text-align:center;padding:48px 32px">
-          <p class="eyebrow">PLATAFORMA TÁCTICA · ANÁLISIS LOCAL</p>
-          <h1 style="max-width:600px;margin:0 auto">Tu partido, entendido<br />desde la cancha.</h1>
-          <p class="lead" style="max-width:500px;margin:1em auto">Procesamiento 100% local. El video nunca sale de este dispositivo.</p>
+      <nav class="fixed top-0 w-full z-50 flex justify-between items-center px-8 h-16 bg-surface border-b border-outline-variant" style="background:#051426">
+        <div class="flex items-center gap-4">
+          <span class="text-headline-md font-bold" style="color:#aff73f;font-family:Inter;font-size:20px;line-height:28px">OpenMatch AI</span>
+        </div>
+        <div class="flex items-center gap-6">
+          <span class="text-label-caps tracking-widest hidden md:block" style="color:#c2cab0">Procesamiento 100% local</span>
+        </div>
+      </nav>
+      <main class="relative z-10 pt-32 pb-24 px-8 max-w-7xl mx-auto">
+        <section class="mb-16 md:mb-24 flex flex-col items-start gap-6 max-w-3xl">
+          <h1 class="text-5xl md:text-6xl leading-tight font-bold tracking-tight" style="color:#aff73f;font-family:Inter">Tu partido, entendido desde la cancha.</h1>
+          <p class="text-xl" style="color:#c2cab0;font-family:Inter">Análisis táctico profesional con privacidad total. Todo el procesamiento ocurre en tu navegador sin enviar datos a la nube.</p>
         </section>
-        <div class="home-cards">
-          <button class="home-card" data-view="match">
-            <span class="home-card-icon">🎥</span>
-            <strong>Nuevo Partido</strong>
-            <span>Análisis en vivo o video grabado con detección, posesión y mapa táctico.</span>
-          </button>
-          <button class="home-card" data-view="history">
-            <span class="home-card-icon">📋</span>
-            <strong>Historial</strong>
-            <span>Sesiones guardadas con estadísticas, eventos e insights tácticos.</span>
-          </button>
-          <button class="home-card" data-view="practice">
-            <span class="home-card-icon">✎</span>
-            <strong>Práctica Táctica</strong>
-            <span>Dibujo de jugadas sobre video congelado. Crea y guarda plantillas tácticas.</span>
-          </button>
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-5">
+          <div id="home-card-match" class="md:col-span-8 relative overflow-hidden rounded-[18px] cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] p-6 flex flex-col justify-between min-h-[340px]" style="background:#122033;border:1px solid rgba(175,247,63,.3);box-shadow:0 0 20px rgba(175,247,63,.15)">
+            <div class="absolute top-0 right-0 p-8 opacity-20">
+              <span class="text-[120px]" style="color:#aff73f;font-family:'Material Symbols Outlined'">videocam</span>
+            </div>
+            <div class="relative z-20">
+              <div class="w-12 h-12 rounded-lg flex items-center justify-center mb-6" style="background:#aff73f">
+                <span class="font-bold text-xl" style="color:#051426">+</span>
+              </div>
+              <h2 class="text-3xl font-semibold mb-2" style="color:#ffffff;font-family:Inter">Nuevo Partido</h2>
+              <p class="text-base max-w-md" style="color:#c2cab0;font-family:Inter">Inicia un análisis en vivo mediante cámara conectada o carga un video grabado para procesamiento automático de trayectorias.</p>
+            </div>
+            <div class="relative z-20 mt-auto">
+              <button id="home-btn-match" class="font-bold px-8 py-3 rounded-lg flex items-center gap-2 transition-colors" style="background:#aff73f;color:#213600">Comenzar Sesión <span style="font-family:'Material Symbols Outlined'">arrow_forward</span></button>
+            </div>
+          </div>
+          <div id="home-card-history" class="md:col-span-4 relative rounded-[18px] p-6 flex flex-col justify-between cursor-pointer min-h-[340px]" style="background:rgba(16,24,39,.8);border:1px solid #263148;backdrop-filter:blur(12px)">
+            <div>
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-6" style="background:#3f4758">
+                <span style="font-family:'Material Symbols Outlined';color:#ffffff">history</span>
+              </div>
+              <h2 class="text-xl font-semibold mb-2" style="color:#ffffff;font-family:Inter">Historial</h2>
+              <p class="text-sm" style="color:#c2cab0;font-family:Inter">Revisa tus sesiones guardadas, estadísticas de posesión, mapas de calor e insights tácticos generados anteriormente.</p>
+            </div>
+            <div class="mt-8 pt-4 flex items-center justify-between" style="border-top:1px solid #424935">
+              <span class="text-xs font-bold tracking-widest" style="color:#c2cab0">SESIONES</span>
+              <span style="font-family:'Material Symbols Outlined';color:#ffffff">chevron_right</span>
+            </div>
+          </div>
+          <div id="home-card-practice" class="md:col-span-12 relative rounded-[18px] p-6 flex flex-col md:flex-row gap-8 items-center cursor-pointer" style="background:rgba(16,24,39,.8);border:1px solid #263148;backdrop-filter:blur(12px)">
+            <div class="w-full md:w-1/3 aspect-video rounded-xl overflow-hidden relative flex items-center justify-center" style="background:#051426">
+              <span style="font-family:'Material Symbols Outlined';color:#aff73f;font-size:3rem">edit_note</span>
+            </div>
+            <div class="flex-1">
+              <h2 class="text-xl font-semibold mb-2" style="color:#ffffff;font-family:Inter">Práctica Táctica</h2>
+              <p class="text-base mb-6" style="color:#c2cab0;font-family:Inter">Herramientas de dibujo profesional sobre video. Crea clips educativos, explica conceptos de presión o transiciones con nuestra pizarra digital interactiva.</p>
+              <div class="flex gap-4">
+                <span class="px-3 py-1 rounded text-xs font-bold tracking-widest" style="background:#283549;color:#d5e3fd">Pizarra Pro</span>
+                <span class="px-3 py-1 rounded text-xs font-bold tracking-widest" style="background:#283549;color:#d5e3fd">Exportar</span>
+              </div>
+            </div>
+            <div class="hidden md:block">
+              <span style="font-family:'Material Symbols Outlined';color:#aff73f;font-size:2rem">brush</span>
+            </div>
+          </div>
         </div>
       </main>
-      <footer>OpenMatch AI · MVP local-first · <span id="pwa-state">Comprobando modo offline…</span></footer>`;
-    this.#root.querySelectorAll("[data-view]").forEach((btn) => btn.addEventListener("click", () => this.#navigate(btn.dataset.view)));
+      <footer class="w-full py-4 px-8 flex flex-col md:flex-row justify-between items-center border-t text-sm gap-4" style="background:#010e21;border-color:#424935;color:#c2cab0;font-family:Inter">
+        <div class="flex items-center gap-4">
+          <span class="font-bold text-xs tracking-widest" style="color:#aff73f">OpenMatch AI</span>
+          <span>© 2024. Análisis táctico privado.</span>
+        </div>
+      </footer>
+      <div class="fixed inset-0 z-50 hidden" id="setup-modal">
+        <div class="absolute inset-0 transition-opacity" style="background:rgba(5,20,38,.9);backdrop-filter:blur(12px)"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+          <div class="rounded-[18px] border w-full max-w-4xl max-h-[90vh] overflow-y-auto flex flex-col shadow-2xl custom-scrollbar" style="background:#122033;border-color:#424935">
+            <div class="p-6 border-b flex justify-between items-center" style="border-color:#424935;background:#1d2b3e">
+              <h3 class="text-2xl font-semibold" style="color:#ffffff;font-family:Inter">Configuración del Encuentro</h3>
+              <button id="modal-close" style="font-family:'Material Symbols Outlined';color:#c2cab0;cursor:pointer">close</button>
+            </div>
+            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div class="space-y-6">
+                <div>
+                  <label class="text-xs font-bold tracking-widest" style="color:#c2cab0">Equipo Local</label>
+                  <div class="flex gap-2 mt-2">
+                    <input id="hl-team-a-name" class="flex-1 rounded-lg px-4 py-2 border" placeholder="Nombre Local" style="background:#051426;border-color:#424935;color:#ffffff" />
+                    <input id="hl-team-a-color" type="color" value="#3da5ff" class="w-12 h-10 rounded-lg cursor-pointer" style="background:transparent;border:none" />
+                  </div>
+                </div>
+                <div>
+                  <label class="text-xs font-bold tracking-widest" style="color:#c2cab0">Equipo Visitante</label>
+                  <div class="flex gap-2 mt-2">
+                    <input id="hl-team-b-name" class="flex-1 rounded-lg px-4 py-2 border" placeholder="Nombre Visitante" style="background:#051426;border-color:#424935;color:#ffffff" />
+                    <input id="hl-team-b-color" type="color" value="#ff6b6b" class="w-12 h-10 rounded-lg cursor-pointer" style="background:transparent;border:none" />
+                  </div>
+                </div>
+                <div>
+                  <label class="text-xs font-bold tracking-widest" style="color:#c2cab0">Color del Balón</label>
+                  <div class="flex items-center gap-4 mt-2">
+                    <input id="hl-ball-color" type="color" value="#f5c518" class="w-12 h-10 rounded-lg cursor-pointer" style="background:transparent;border:none" />
+                    <span class="text-sm italic" style="color:#c2cab0">Se recomienda color contrastante al césped.</span>
+                  </div>
+                </div>
+              </div>
+              <div class="space-y-6">
+                <div>
+                  <label class="text-xs font-bold tracking-widest" style="color:#c2cab0">Tipo de Juego / Dimensiones (m)</label>
+                  <div class="grid grid-cols-2 gap-4 mt-2">
+                    <select id="hl-field-type" class="rounded-lg px-4 py-2 border" style="background:#051426;border-color:#424935;color:#ffffff">
+                      <option value="football11">Fútbol 11</option>
+                      <option value="football7">Fútbol 7</option>
+                      <option value="baby">Baby Fútbol</option>
+                      <option value="futsal">Futsal</option>
+                    </select>
+                    <div class="flex gap-2">
+                      <input id="hl-field-length" type="number" value="105" class="w-full rounded-lg px-4 py-2 border text-center" style="background:#051426;border-color:#424935;color:#ffffff" />
+                      <input id="hl-field-width" type="number" value="68" class="w-full rounded-lg px-4 py-2 border text-center" style="background:#051426;border-color:#424935;color:#ffffff" />
+                    </div>
+                  </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label class="text-xs font-bold tracking-widest" style="color:#c2cab0">Duración (min)</label>
+                    <input id="hl-duration" type="number" min="20" max="120" value="90" class="w-full rounded-lg px-4 py-2 border mt-2" style="background:#051426;border-color:#424935;color:#ffffff" />
+                  </div>
+                  <div>
+                    <label class="text-xs font-bold tracking-widest" style="color:#c2cab0">Jugadores p/e</label>
+                    <input id="hl-players" type="number" min="5" max="11" value="11" class="w-full rounded-lg px-4 py-2 border mt-2" style="background:#051426;border-color:#424935;color:#ffffff" />
+                  </div>
+                </div>
+                <div>
+                  <label class="text-xs font-bold tracking-widest" style="color:#c2cab0">Modo de Análisis</label>
+                  <div class="grid grid-cols-2 gap-2 mt-2">
+                    <button class="hl-mode active p-3 rounded-lg border text-sm font-bold" data-mode="balanced" style="border-color:#aff73f;background:rgba(175,247,63,.1);color:#aff73f">Balanceado</button>
+                    <button class="hl-mode p-3 rounded-lg border text-sm" data-mode="performance" style="border-color:#424935;color:#c2cab0">Rendimiento</button>
+                    <button class="hl-mode p-3 rounded-lg border text-sm" data-mode="precision" style="border-color:#424935;color:#c2cab0">Precisión</button>
+                    <button class="hl-mode p-3 rounded-lg border text-sm" data-mode="saver" style="border-color:#424935;color:#c2cab0">Ahorro</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="p-6 border-t flex flex-col md:flex-row items-center justify-between gap-4" style="border-color:#424935;background:#1d2b3e">
+              <div class="flex items-center gap-3">
+                <span style="font-family:'Material Symbols Outlined';color:#aff73f">info</span>
+                <p class="text-sm" style="color:#c2cab0">El motor de IA cargará en tu memoria local.</p>
+              </div>
+              <button id="hl-start-btn" class="w-full md:w-auto px-12 py-3 rounded-lg font-bold flex items-center justify-center gap-2" style="background:#283549;color:#c2cab0;cursor:not-allowed" disabled>
+                Comenzar
+                <span style="font-family:'Material Symbols Outlined'">play_circle</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    this.#setupHomeListeners();
+  }
+
+  #setupHomeListeners() {
+    this.#root.querySelector("#home-btn-match")?.addEventListener("click", () => this.#toggleModal(true));
+    this.#root.querySelector("#home-card-match")?.addEventListener("click", () => this.#toggleModal(true));
+    this.#root.querySelector("#home-card-history")?.addEventListener("click", () => this.#navigate("history"));
+    this.#root.querySelector("#home-card-practice")?.addEventListener("click", () => this.#navigate("practice"));
+    this.#root.querySelector("#modal-close")?.addEventListener("click", () => this.#toggleModal(false));
+    const validateHome = () => {
+      const aName = this.#root.querySelector("#hl-team-a-name")?.value.trim();
+      const bName = this.#root.querySelector("#hl-team-b-name")?.value.trim();
+      const btn = this.#root.querySelector("#hl-start-btn");
+      if (btn) btn.disabled = !aName || !bName;
+    };
+    this.#root.querySelectorAll("#hl-team-a-name, #hl-team-b-name, #hl-duration, #hl-players").forEach((el) => el?.addEventListener("input", validateHome));
+    this.#root.querySelectorAll(".hl-mode").forEach((btn) => btn.addEventListener("click", () => {
+      this.#root.querySelectorAll(".hl-mode").forEach((b) => { b.style.borderColor = "#424935"; b.style.color = "#c2cab0"; b.style.background = "transparent"; });
+      btn.style.borderColor = "#aff73f"; btn.style.color = "#aff73f"; btn.style.background = "rgba(175,247,63,.1)";
+      validateHome();
+    }));
+    this.#root.querySelector("#hl-start-btn")?.addEventListener("click", () => {
+      if (this.#root.querySelector("#hl-start-btn").disabled) return;
+      this.#syncHomeSetup();
+      this.#toggleModal(false);
+      this.#navigate("match");
+    });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") this.#toggleModal(false); });
+    validateHome();
+  }
+
+  #toggleModal(show) {
+    const modal = this.#root.querySelector("#setup-modal");
+    if (!modal) return;
+    modal.classList.toggle("hidden", !show);
+    document.body.style.overflow = show ? "hidden" : "auto";
+  }
+
+  #syncHomeSetup() {
+    const get = (id) => this.#root.querySelector(id);
+    const mode = this.#root.querySelector(".hl-mode.active")?.dataset.mode || "balanced";
+    const config = {
+      mode,
+      fieldType: get("#hl-field-type")?.value || "football11",
+      length: Number(get("#hl-field-length")?.value) || 105,
+      width: Number(get("#hl-field-width")?.value) || 68,
+      teamA: { name: get("#hl-team-a-name")?.value.trim() || "", color: get("#hl-team-a-color")?.value || "#3da5ff" },
+      teamB: { name: get("#hl-team-b-name")?.value.trim() || "", color: get("#hl-team-b-color")?.value || "#ff6b6b" },
+      ballColor: get("#hl-ball-color")?.value || "#f5c518",
+      duration: Number(get("#hl-duration")?.value) || 90,
+      players: Number(get("#hl-players")?.value) || 11,
+    };
+    this.#events.emit("settings.teamColors", { teamA: config.teamA.color, teamB: config.teamB.color, ball: config.ballColor });
+    this.#events.emit("settings.modeChanged", { mode });
+    this.#store.saveSetting("matchConfig", config).catch(() => {});
   }
 
   #workspaceHTML() {

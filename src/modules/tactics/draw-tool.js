@@ -32,6 +32,7 @@ export class DrawTool {
   }
 
   setTool(t) { this.#tool = t; }
+  getColor() { return this.#color; }
   setColor(c) { this.#color = c; }
 
   clear() { this.#elements = []; this.#render(); this.#emit(); }

@@ -42,6 +42,8 @@ export class SessionRecorder {
     this.#lastPositions.clear();
   }
 
+  get sessionStartedAt() { return this.#current?.startedAt; }
+
   markEvent(type, label) {
     if (!this.#current) return;
     this.#current.events.push({ type, label, timestamp: Date.now() - this.#current.startedAt });

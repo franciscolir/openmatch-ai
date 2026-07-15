@@ -18,3 +18,36 @@ test("always appends a tactical suggestion", () => {
   const insights = generateInsights({ durationMs: 1000, distance: 0, maxSpeed: 0, teamDistanceA: 0, teamDistanceB: 0, possession: null });
   assert.ok(insights[insights.length - 1].startsWith("Sugerencia:"));
 });
+
+test("includes event-based insights for goals and chances", () => {
+  const insights = generateInsights({
+    durationMs: 300000, distance: 2000, maxSpeed: 6,
+    teamDistanceA: 1100, teamDistanceB: 900, possession: 55,
+    events: [
+      { type: "goal", label: "⚽ Gol", timestamp: 60000 },
+      { type: "goal", label: "⚽ Gol", timestamp: 180000 },
+      { type: "chance", label: "🎯 Ocasión", timestamp: 30000 },
+      { type: "chance", label: "🎯 Ocasión", timestamp: 120000 },
+      { type: "chance", label: "🎯 Ocasión", timestamp: 240000 },
+      { type: "fault", label: "🚩 Falta", timestamp: 10000 },
+      { type: "fault", label: "🚩 Falta", timestamp: 50000 },
+      { type: "fault", label: "🚩 Falta", timestamp: 90000 },
+      { type: "fault", label: "🚩 Falta", timestamp: 150000 },
+    ],
+  });
+  assert.ok(insights.some((text) => text.includes("Goles registrados: 2")));
+  assert.ok(insights.some((text) => text.includes("Ocasiones de gol: 3")));
+  assert.ok(insights.some((text) => text.includes("revisar disciplina defensiva")));
+});
+
+test("reports chances without goals", () => {
+  const insights = generateInsights({
+    durationMs: 300000, distance: 2000, maxSpeed: 6,
+    teamDistanceA: 1000, teamDistanceB: 1000, possession: 50,
+    events: [
+      { type: "chance", label: "🎯 Ocasión", timestamp: 30000 },
+      { type: "chance", label: "🎯 Ocasión", timestamp: 120000 },
+    ],
+  });
+  assert.ok(insights.some((text) => text.includes("sin gol")));
+});

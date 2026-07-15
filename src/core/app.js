@@ -15,6 +15,7 @@ import { SessionRecorder } from "../modules/storage/session-recorder.js";
 import { HistoryPanel } from "../modules/storage/history-panel.js";
 import { InsightPanel } from "../modules/insights/insight-panel.js";
 import { DrawTool } from "../modules/tactics/draw-tool.js";
+import { showToast } from "../utils/toast.js";
 
 export class App {
   #root;
@@ -171,6 +172,7 @@ export class App {
             <button class="event-btn offside" data-event="offside" title="Marcar fuera de juego">🚦 Offside</button>
             <button class="event-btn chance" data-event="chance" title="Marcar ocasión de gol">🎯 Ocasión</button>
             <button class="event-btn card" data-event="yellow" title="Marcar tarjeta">🟨 Tarjeta</button>
+            <div class="event-feedback" id="event-feedback" hidden><ol class="event-feedback-list" id="event-list"></ol></div>
           </div>
           <div class="field-controls">
             <div class="field-type-picker" role="group" aria-label="Tipo de cancha">
@@ -455,9 +457,22 @@ export class App {
       const name = this.#root.querySelector("#draw-template-name").value.trim();
       if (name && this.#drawTool.saveTemplate(name)) {
         this.#root.querySelector("#draw-template-name").value = "";
+    const eventList = this.#root.querySelector("#event-list");
+    const eventFeedback = this.#root.querySelector("#event-feedback");
     this.#root.querySelectorAll(".event-btn").forEach((btn) => btn.addEventListener("click", () => {
-      this.#recorder.markEvent(btn.dataset.event, btn.textContent.trim());
+      const label = btn.textContent.trim();
+      this.#recorder.markEvent(btn.dataset.event, label);
+      showToast(`✓ ${label}`);
+      const li = document.createElement("li");
+      const elapsed = (Date.now() - this.#recorder.sessionStartedAt) / 1000;
+      const m = Math.floor(elapsed / 60);
+      const s = Math.floor(elapsed % 60);
+      li.innerHTML = `<time>${m}:${String(s).padStart(2, "0")}</time> ${label}`;
+      eventList.appendChild(li);
+      eventFeedback.hidden = false;
+      eventList.scrollTop = eventList.scrollHeight;
     }));
+    this.#unsubscribers.push(this.#events.on("analysis.stopped", () => { eventFeedback.hidden = true; eventList.innerHTML = ""; }));
     this.#renderTemplateList();
       }
     });

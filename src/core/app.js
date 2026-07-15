@@ -413,7 +413,7 @@ export class App {
                 <span style="font-family:'Material Symbols Outlined';color:#aff73f">info</span>
                 <p class="text-sm" style="color:#c2cab0">El motor de IA cargará en tu memoria local.</p>
               </div>
-              <button id="hl-start-btn" class="w-full md:w-auto px-12 py-3 rounded-lg font-bold flex items-center justify-center gap-2" style="background:#283549;color:#c2cab0;cursor:not-allowed" disabled>
+              <button id="hl-start-btn" class="w-full md:w-auto px-12 py-3 rounded-lg font-bold flex items-center justify-center gap-2" style="background:#aff73f;color:#213600">
                 Comenzar
                 <span style="font-family:'Material Symbols Outlined'">play_circle</span>
               </button>

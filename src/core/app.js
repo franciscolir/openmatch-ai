@@ -96,26 +96,46 @@ export class App {
     this.#bindControls();
     this.#restoreSettings();
     this.#setPhase("setup");
-    getDeviceProfile().then((profile) => {
-      const sel = this.#root.querySelector("#setup-overlay");
-      sel.querySelectorAll(".mode").forEach((b) => b.classList.toggle("active", b.dataset.mode === profile.recommendedMode));
-      this.#syncSetup();
-    });
     const setupOverlay = this.#root.querySelector("#setup-overlay");
-    setupOverlay.querySelectorAll(".mode").forEach((btn) => btn.addEventListener("click", () => {
-      setupOverlay.querySelectorAll(".mode").forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
+    const validateForm = () => {
+      const teamA = setupOverlay.querySelector("#sl-team-a-name").value.trim();
+      const teamB = setupOverlay.querySelector("#sl-team-b-name").value.trim();
+      const dur = Number(setupOverlay.querySelector("#sl-duration").value);
+      const players = Number(setupOverlay.querySelector("#sl-players").value);
+      setupOverlay.querySelector("#setup-start").disabled = !teamA || !teamB || !dur || !players || dur < 20 || dur > 120 || players < 5 || players > 11;
+    };
+    getDeviceProfile().then((profile) => {
+      setupOverlay.querySelectorAll(".mode").forEach((b) => b.classList.toggle("active", b.dataset.mode === profile.recommendedMode));
+    });
+    (async () => {
+      const saved = await this.#store.loadSetting("matchConfig");
+      if (saved) {
+        setupOverlay.querySelector("#sl-team-a-name").value = saved.teamA?.name || "";
+        setupOverlay.querySelector("#sl-team-b-name").value = saved.teamB?.name || "";
+        setupOverlay.querySelector("#sl-team-a-color").value = saved.teamA?.color || "#3da5ff";
+        setupOverlay.querySelector("#sl-team-b-color").value = saved.teamB?.color || "#ff6b6b";
+        setupOverlay.querySelector("#sl-ball-color").value = saved.ballColor || "#f5c518";
+        setupOverlay.querySelector("#sl-duration").value = saved.duration || 90;
+        setupOverlay.querySelector("#sl-players").value = saved.players || 11;
+        if (saved.mode) setupOverlay.querySelectorAll(".mode").forEach((b) => b.classList.toggle("active", b.dataset.mode === saved.mode));
+        if (saved.fieldType) setupOverlay.querySelectorAll(".field-type").forEach((b) => b.classList.toggle("active", b.dataset.type === saved.fieldType));
+        if (saved.length) setupOverlay.querySelector("#sl-field-length").value = saved.length;
+        if (saved.width) setupOverlay.querySelector("#sl-field-width").value = saved.width;
+      }
       this.#syncSetup();
-    }));
-    setupOverlay.querySelectorAll(".field-type").forEach((btn) => btn.addEventListener("click", () => {
-      setupOverlay.querySelectorAll(".field-type").forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      this.#syncSetup();
-    }));
-    const syncField = () => this.#syncSetup();
-    setupOverlay.querySelector("#sl-field-length").addEventListener("input", syncField);
-    setupOverlay.querySelector("#sl-field-width").addEventListener("input", syncField);
+      validateForm();
+    })();
+    setupOverlay.querySelectorAll(".mode, .field-type").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const parent = btn.closest(".mode-picker, .field-type-picker");
+        if (parent) { parent.querySelectorAll(".mode, .field-type").forEach((b) => b.classList.remove("active")); btn.classList.add("active"); }
+        this.#syncSetup();
+        validateForm();
+      });
+    });
+    setupOverlay.querySelectorAll("input").forEach((el) => el.addEventListener("input", () => { this.#syncSetup(); validateForm(); }));
     setupOverlay.querySelector("#setup-start").addEventListener("click", () => {
+      if (setupOverlay.querySelector("#setup-start").disabled) return;
       this.#syncSetup();
       this.#setPhase("analysis");
     });
@@ -167,20 +187,21 @@ export class App {
     const ftype = overlay.querySelector(".field-type.active")?.dataset.type || "football11";
     const length = Number(overlay.querySelector("#sl-field-length").value) || 105;
     const width = Number(overlay.querySelector("#sl-field-width").value) || 68;
-    const colors = {
-      teamA: overlay.querySelector("#sl-color-a").value,
-      teamB: overlay.querySelector("#sl-color-b").value,
-      ball: overlay.querySelector("#sl-color-ball").value,
+    const config = {
+      mode,
+      fieldType: ftype,
+      length,
+      width,
+      teamA: { name: overlay.querySelector("#sl-team-a-name").value.trim(), color: overlay.querySelector("#sl-team-a-color").value },
+      teamB: { name: overlay.querySelector("#sl-team-b-name").value.trim(), color: overlay.querySelector("#sl-team-b-color").value },
+      ballColor: overlay.querySelector("#sl-ball-color").value,
+      duration: Number(overlay.querySelector("#sl-duration").value),
+      players: Number(overlay.querySelector("#sl-players").value),
     };
-    const ws = this.#root.querySelector(".workspace");
-    ws.querySelector("#field-length").value = length;
-    ws.querySelector("#field-width").value = width;
-    ws.querySelector("#color-team-a").value = colors.teamA;
-    ws.querySelector("#color-team-b").value = colors.teamB;
-    ws.querySelector("#color-ball").value = colors.ball;
-    this.#events.emit("settings.teamColors", colors);
+    this.#events.emit("settings.teamColors", { teamA: config.teamA.color, teamB: config.teamB.color, ball: config.ballColor });
     this.#events.emit("settings.modeChanged", { mode });
     this.#tactical?.refreshFieldType(ftype, { length, width });
+    this.#store.saveSetting("matchConfig", config).catch(() => {});
   }
 
   #renderHome() {
@@ -294,30 +315,43 @@ export class App {
           <aside class="sidebar"><div id="dashboard"></div><div id="history"></div><div id="insights"></div></aside>
         <aside class="setup-overlay" id="setup-overlay">
           <div class="setup-card">
-            <p class="eyebrow">BIENVENIDO</p>
-            <h3 style="margin:6px 0 4px">Configuración del partido</h3>
-            <p style="color:var(--muted);font-size:.78rem;margin:0 0 18px">Ajusta los parámetros antes de empezar.</p>
-            <div class="mode-picker" role="group" aria-label="Modo">
-              <button class="mode active" data-mode="balanced">Balanceado</button>
-              <button class="mode" data-mode="performance">Rendimiento</button>
-              <button class="mode" data-mode="precision">Precisión</button>
-              <button class="mode" data-mode="saver">Ahorro</button>
+            <p class="eyebrow">NUEVO PARTIDO</p>
+            <h3>Configuración</h3>
+            <p style="color:var(--muted);font-size:.78rem;margin:0 0 18px">Completa todos los campos para comenzar.</p>
+            <div class="team-row">
+              <label>🏠 Equipo local
+                <div><input type="text" id="sl-team-a-name" placeholder="Ej: Real Madrid" /><input type="color" id="sl-team-a-color" value="#3da5ff" /></div></label>
+              <label>✈️ Equipo visitante
+                <div><input type="text" id="sl-team-b-name" placeholder="Ej: Barcelona" /><input type="color" id="sl-team-b-color" value="#ff6b6b" /></div></label>
             </div>
-            <div class="field-type-picker" role="group" style="margin-top:12px">
-              <button class="field-type active" data-type="football11">F11</button>
-              <button class="field-type" data-type="football7">F7</button>
-              <button class="field-type" data-type="baby">Baby</button>
-              <button class="field-type" data-type="futsal">Futsal</button>
+            <div class="field-row" style="margin-top:16px">
+              <label class="select-wrap">⚽ Deporte
+                <div class="field-type-picker" style="margin-top:4px">
+                  <button class="field-type active" data-type="football11">F11</button>
+                  <button class="field-type" data-type="football7">F7</button>
+                  <button class="field-type" data-type="baby">Baby</button>
+                  <button class="field-type" data-type="futsal">Futsal</button>
+                </div></label>
+              <label class="select-wrap" style="flex:0 0 80px">Largo <input id="sl-field-length" type="number" value="105" /></label>
+              <label class="select-wrap" style="flex:0 0 80px">Ancho <input id="sl-field-width" type="number" value="68" /></label>
             </div>
-            <div style="display:flex;gap:10px;margin-top:12px">
-              <label class="select-wrap"><small>Largo</small><input id="sl-field-length" type="number" value="105" /></label>
-              <label class="select-wrap"><small>Ancho</small><input id="sl-field-width" type="number" value="68" /></label>
+            <div class="field-row" style="margin-top:12px">
+              <label class="select-wrap">⏱️ Duración (min) <input id="sl-duration" type="number" min="20" max="120" value="90" /></label>
+              <label class="select-wrap">👥 Jugadores por equipo <input id="sl-players" type="number" min="5" max="11" value="11" /></label>
             </div>
-            <details style="margin-top:10px;font-size:.78rem;color:var(--muted)">
-              <summary>Colores de equipos</summary>
-              <div class="team-config" style="margin-top:6px"><label>A <input id="sl-color-a" type="color" value="#3da5ff" /></label><label>B <input id="sl-color-b" type="color" value="#ff6b6b" /></label><label>Balón <input id="sl-color-ball" type="color" value="#f5c518" /></label></div>
-            </details>
-            <button id="setup-start" class="primary" style="width:100%;margin-top:16px">Comenzar</button>
+            <div class="field-row" style="margin-top:12px">
+              <label class="select-wrap">⚡ Modo
+                <div class="mode-picker" style="margin-top:4px">
+                  <button class="mode active" data-mode="balanced">Balanceado</button>
+                  <button class="mode" data-mode="performance">Rendimiento</button>
+                  <button class="mode" data-mode="precision">Precisión</button>
+                  <button class="mode" data-mode="saver">Ahorro</button>
+                </div></label>
+              <label class="select-wrap">🎨 Balón <input id="sl-ball-color" type="color" value="#f5c518" style="width:60px;height:36px;padding:1px;border:1px solid var(--line);border-radius:5px;background:transparent;cursor:pointer" /></label>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:20px">
+              <button id="setup-start" class="primary" style="flex:1;font-size:.9rem;padding:12px" disabled>Comenzar</button>
+            </div>
           </div>
         </aside>
         <aside class="summary-overlay" id="summary-overlay" hidden>

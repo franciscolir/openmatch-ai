@@ -66,9 +66,18 @@
 .event-btn.card { border-color:#ffd700; }
 .setup-overlay, .summary-overlay { transition:opacity .2s; }
 .setup-overlay[hidden], .summary-overlay[hidden] { display:none !important; }
-.setup-overlay { position:absolute; top:0; left:0; z-index:10; padding:20px; max-width:400px; }
+.setup-overlay { position:fixed; inset:0; z-index:10; display:grid; place-items:center; background:rgba(7,11,20,.75); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); padding:20px; }
 .summary-overlay { position:absolute; inset:0; display:grid; place-items:center; z-index:10; background:rgba(7,11,20,.85); backdrop-filter:blur(4px); padding:20px; }
-.setup-card, .summary-card { max-width:420px; width:100%; padding:28px; border:1px solid var(--line); border-radius:18px; background:var(--panel); box-shadow:0 18px 55px rgba(0,0,0,.4); }
+.setup-card { max-width:520px; width:100%; max-height:90vh; overflow-y:auto; padding:32px; border:1px solid var(--line); border-radius:18px; background:var(--panel); box-shadow:0 18px 55px rgba(0,0,0,.5); }
+.setup-card h3 { margin:0 0 4px; font-size:1.1rem; }
+.setup-card .field-row { display:flex; gap:12px; align-items:end; flex-wrap:wrap; }
+.setup-card .field-row .select-wrap { flex:1; min-width:100px; }
+.setup-card .team-row { display:flex; gap:12px; margin-top:16px; }
+.setup-card .team-row label { flex:1; display:flex; flex-direction:column; gap:4px; font-size:.72rem; color:var(--muted); }
+.setup-card .team-row label div { display:flex; gap:6px; align-items:center; }
+.setup-card .team-row input[type="text"] { flex:1; padding:8px 10px; border:1px solid var(--line); border-radius:6px; background:#111a2a; color:var(--text); font-size:.82rem; }
+.setup-card .team-row input[type="color"] { width:34px; height:34px; padding:1px; border:1px solid var(--line); border-radius:5px; background:transparent; cursor:pointer; }
+.summary-card { max-width:480px; width:100%; max-height:80vh; overflow-y:auto; padding:28px; border:1px solid var(--line); border-radius:18px; background:var(--panel); box-shadow:0 18px 55px rgba(0,0,0,.4); }
 .summary-card { max-width:480px; max-height:80vh; overflow-y:auto; }
 .home-screen { max-width:780px; margin:0 auto; padding:24px 32px; }
 .home-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:20px; }

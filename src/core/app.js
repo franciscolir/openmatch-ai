@@ -664,8 +664,8 @@ export class App {
     let possessionCount = { a: 0, b: 0 }, lastPossTs = 0;
     this.#events.on("camera.ready", () => { mainState = "ready"; updateMain(); });
     this.#events.on("video.loaded", () => { mainState = "ready"; updateMain(); });
-    this.#events.on("field.calibrationStarted", () => { this.#calibrated = false; updateMain(); });
-    this.#events.on("field.calibrated", () => { this.#calibrated = true; mainState = "ready"; updateMain(); });
+    this.#events.on("field.calibrationStarted", () => { this.#calibrated = false; updateMain(); if (fieldToggle) fieldToggle.classList.remove("btn-pulse-calibrate"); });
+    this.#events.on("field.calibrated", () => { this.#calibrated = true; mainState = "ready"; updateMain(); if (fieldToggle) fieldToggle.classList.remove("btn-pulse-calibrate"); });
     const updateTelemetry = () => {
       const v = this.#root.querySelector("#camera-preview");
       if (v?.videoWidth) {
@@ -715,11 +715,11 @@ export class App {
     });
     const $ = (id) => this.#root.querySelector(id);
     this.#unsubscribers.push(this.#events.on("camera.ready", () => {
-      if (fieldToggle) fieldToggle.disabled = false;
+      if (fieldToggle) { fieldToggle.disabled = false; fieldToggle.classList.add("btn-pulse-calibrate"); }
       if ($("#draw-toggle")) $("#draw-toggle").disabled = false;
       const empty = $("#video-empty");
       if (empty) empty.hidden = true;
-      mainState = "calibrate"; updateMain();
+      mainState = "ready"; updateMain();
     }));
     this.#unsubscribers.push(this.#events.on("camera.stopped", () => {
       this.#analysis.stop();

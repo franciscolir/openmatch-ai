@@ -83,5 +83,10 @@
 #draw-overlay:not([hidden]) { pointer-events:auto; }
 #analysis-overlay { z-index:2; } #field-overlay { z-index:3; }
 #field-overlay.calibration-active { cursor:crosshair; pointer-events:auto; }
+@keyframes pulse-calibrate {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(175,247,63,.6); }
+  50% { box-shadow: 0 0 0 8px rgba(175,247,63,0); }
+}
+.btn-pulse-calibrate { animation:pulse-calibrate 1.2s infinite; border-color:#aff73f !important; }
 [hidden] { display:none !important; }
 .field-type-picker { display:flex; gap:6px; width:100%; }

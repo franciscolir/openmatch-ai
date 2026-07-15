@@ -441,12 +441,15 @@ export class App {
       btn.style.borderColor = "#aff73f"; btn.style.color = "#aff73f"; btn.style.background = "rgba(175,247,63,.1)";
       validateHome();
     }));
-    this.#root.querySelector("#hl-start-btn")?.addEventListener("click", () => {
-      if (this.#root.querySelector("#hl-start-btn").disabled) return;
-      this.#syncHomeSetup();
-      this.#toggleModal(false);
-      this.#navigate("match");
-    });
+    const startBtn = this.#root.querySelector("#hl-start-btn");
+    if (startBtn) {
+      startBtn.disabled = false;
+      startBtn.addEventListener("click", () => {
+        this.#syncHomeSetup();
+        this.#toggleModal(false);
+        this.#navigate("match");
+      });
+    }
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") this.#toggleModal(false); });
     validateHome();
   }

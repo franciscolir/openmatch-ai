@@ -472,6 +472,10 @@ export class App {
       </nav>
       <main style="margin-top:64px;height:calc(100vh - 64px);display:flex;flex-direction:column;overflow:hidden;background:#051426">
         <div class="h-14 flex items-center px-8 gap-8" style="background:#0e1c2f;border-bottom:1px solid #424935">
+          <button id="main-action" class="h-10 px-5 rounded-full flex items-center gap-2 shadow-lg transition-transform active:scale-95" style="background:#aff73f;color:#213600;box-shadow:0 0 15px rgba(175,247,63,.3);font-size:.9rem;font-weight:600;white-space:nowrap">
+            <span class="material-symbols-outlined" style="font-size:22px;font-variation-settings:'FILL'1">play_circle</span>
+            <span id="action-text">Iniciar cámara</span>
+          </button>
           <div class="flex items-center gap-2">
             <span class="material-symbols-outlined" style="color:#94da1d;font-size:18px">timer</span>
             <span class="tabular-nums font-bold text-xl" id="timer-display" style="color:#aff73f;font-family:'JetBrains Mono',monospace">00:00</span>
@@ -501,6 +505,21 @@ export class App {
               <div class="absolute inset-0 flex items-center justify-center" id="video-empty">
                 <div class="text-center" style="color:#c2cab0"><span class="material-symbols-outlined" style="color:#aff73f;font-size:4rem">videocam</span><p class="mt-2 text-sm">Conecta una cámara o selecciona un video</p></div>
               </div>
+            </div>
+            <div class="flex items-center gap-4 py-2">
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-bold uppercase" style="color:#c2cab0">Cámara</span>
+                <select id="camera-select" class="rounded-lg px-3 py-1.5 text-sm" style="background:#051426;border:1px solid #424935;color:#d5e3fd;min-width:140px"><option>Buscando dispositivos...</option></select>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-bold uppercase" style="color:#c2cab0">Calidad</span>
+                <div class="flex rounded-lg overflow-hidden" style="background:#051426;border:1px solid #424935">
+                  <button class="qual-btn px-3 py-1.5 text-[10px] font-bold" data-q="1080" style="background:#aff73f;color:#213600">1080p</button>
+                  <button class="qual-btn px-3 py-1.5 text-[10px] font-bold" data-q="720" style="color:#c2cab0">720p</button>
+                  <button class="qual-btn px-3 py-1.5 text-[10px] font-bold" data-q="480" style="color:#c2cab0">480p</button>
+                </div>
+              </div>
+              <button id="btn-flip" class="material-symbols-outlined p-2 rounded-full transition-colors" style="color:#c2cab0;font-size:20px">flip_camera_ios</button>
             </div>
             <div class="h-48 flex gap-4">
               <div class="flex-1 rounded-xl p-4 flex flex-col gap-3" style="background:rgba(16,24,39,.8);border:1px solid #263148">
@@ -556,31 +575,8 @@ export class App {
             </div>
           </div>
         </div>
-        <footer class="h-16 flex items-center justify-between px-8 border-t relative" style="background:#010e21;border-color:#424935">
-          <div class="flex items-center gap-8">
-            <div class="flex items-center gap-2">
-              <span class="text-[10px] font-bold uppercase" style="color:#c2cab0">Cámara</span>
-              <select id="camera-select" class="rounded-lg px-3 py-1 text-sm" style="background:#051426;border:1px solid #424935;color:#d5e3fd"><option>Buscando dispositivos...</option></select>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="text-[10px] font-bold uppercase" style="color:#c2cab0">Calidad</span>
-              <div class="flex rounded-lg overflow-hidden" style="background:#051426;border:1px solid #424935">
-                <button class="qual-btn px-3 py-1 text-[10px] font-bold" data-q="1080" style="background:#aff73f;color:#213600">1080p</button>
-                <button class="qual-btn px-3 py-1 text-[10px] font-bold" data-q="720" style="color:#c2cab0">720p</button>
-                <button class="qual-btn px-3 py-1 text-[10px] font-bold" data-q="480" style="color:#c2cab0">480p</button>
-              </div>
-            </div>
-          </div>
-          <div class="absolute left-1/2 -translate-x-1/2 -top-10">
-            <button id="main-action" class="h-16 px-8 rounded-full flex items-center gap-3 shadow-2xl transition-transform active:scale-95" style="background:#aff73f;color:#213600;box-shadow:0 0 20px rgba(175,247,63,.3)">
-              <span class="material-symbols-outlined" style="font-size:32px;font-variation-settings:'FILL'1">play_circle</span>
-              <span class="text-xl font-semibold" id="action-text">Iniciar análisis</span>
-            </button>
-          </div>
-          <div class="flex items-center gap-4">
-            <button id="btn-flip" class="material-symbols-outlined p-2 rounded-full transition-colors" style="color:#c2cab0">flip_camera_ios</button>
-            <button id="btn-settings" class="material-symbols-outlined p-2 rounded-full transition-colors" style="color:#c2cab0">settings</button>
-          </div>
+        <footer class="h-12 flex items-center justify-end px-8 border-t" style="background:#010e21;border-color:#424935">
+          <button id="btn-settings" class="material-symbols-outlined p-2 rounded-full transition-colors" style="color:#c2cab0;font-size:20px">settings</button>
         </footer>
       </main>
       <aside class="summary-overlay" id="summary-overlay" hidden style="position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:rgba(5,20,38,.9);backdrop-filter:blur(12px);padding:20px">

@@ -70,11 +70,13 @@ export class App {
       this.#renderHome();
       return;
     }
-    this.#root.innerHTML = "";
+    try { this.#root.innerHTML = ""; } catch {}
     document.body.style.overflow = "auto";
-    if (view === "match") this.#initMatchView();
-    else if (view === "history") this.#initHistoryView();
-    else if (view === "practice") this.#initPracticeView();
+    try {
+      if (view === "match") this.#initMatchView();
+      else if (view === "history") this.#initHistoryView();
+      else if (view === "practice") this.#initPracticeView();
+    } catch (e) { console.error("View error:", e); }
   }
 
   #setPhase(phase) {
@@ -624,7 +626,15 @@ export class App {
     let mainState = "idle";
     const mainBtn = this.#root.querySelector("#main-action");
     const cameraSelect = this.#root.querySelector("#camera-select");
-    const qualSelect = this.#root.querySelector("#quality-select");
+    const qualBtns = this.#root.querySelectorAll(".qual-btn");
+    const getQuality = () => {
+      const active = this.#root.querySelector(".qual-btn")?.dataset?.q || "720";
+      return Number(active);
+    };
+    qualBtns.forEach((b) => b.addEventListener("click", () => {
+      qualBtns.forEach((x) => { x.style.background = "transparent"; x.style.color = "#c2cab0"; });
+      b.style.background = "#aff73f"; b.style.color = "#213600";
+    }));
     const updateMain = () => {
       const texts = {
         idle: "📷 Iniciar cámara",
@@ -634,27 +644,31 @@ export class App {
         paused: "▶️ Reanudar",
         finalize: "⏹️ Finalizar",
       };
-      mainBtn.textContent = texts[mainState] || texts.idle;
-      mainBtn.disabled = mainState === "idle" && !this.#camera.isRunning && !this.#videoFile.isLoaded;
+      if (mainBtn) {
+        mainBtn.textContent = texts[mainState] || texts.idle;
+        mainBtn.disabled = mainState === "idle" && !this.#camera.isRunning && !this.#videoFile.isLoaded;
+      }
     };
-    mainBtn.addEventListener("click", () => {
-      if (mainState === "idle") { this.#camera.start({ deviceId: cameraSelect.value, height: Number(qualSelect.value) }).catch(() => {}); }
+    if (mainBtn) {
+      mainBtn.addEventListener("click", () => {
+        if (mainState === "idle") { this.#camera.start({ deviceId: cameraSelect?.value, height: getQuality() }).catch(() => {}); }
       else if (mainState === "calibrate") {
         const dims = { length: Number(this.#root.querySelector("#field-length").value), width: Number(this.#root.querySelector("#field-width").value) };
         this.#fieldCalibration.start(dims);
         mainState = "ready"; updateMain();
       }
       else if (mainState === "ready") {
-        this.#analysis.start(this.#root.querySelector(".mode.active")?.dataset.mode || "balanced").catch(() => {});
+        this.#analysis.start("balanced").catch(() => {});
         mainState = "running"; updateMain();
       }
       else if (mainState === "running") { this.#analysis.stop(); mainState = "paused"; updateMain(); }
       else if (mainState === "paused") {
-        this.#analysis.start(this.#root.querySelector(".mode.active")?.dataset.mode || "balanced").catch(() => {});
+        this.#analysis.start("balanced").catch(() => {});
         mainState = "finalize"; updateMain();
       }
       else if (mainState === "finalize") { this.#analysis.stop(); }
     });
+    }
     let timerSeconds = 0, timerInterval = null;
     const timerDisplay = this.#root.querySelector("#timer-display");
     const startTimer = () => { if (timerInterval) return; timerInterval = setInterval(() => { timerSeconds++; timerDisplay.textContent = `${String(Math.floor(timerSeconds / 60)).padStart(2, "0")}:${String(timerSeconds % 60).padStart(2, "0")}`; }, 1000); };

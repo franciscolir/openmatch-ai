@@ -76,9 +76,6 @@ export class App {
   #setPhase(phase) {
     this.#root.querySelector("#setup-overlay").hidden = phase !== "setup";
     this.#root.querySelector("#summary-overlay").hidden = phase !== "summary";
-    const content = this.#root.querySelector("#workspace-content");
-    content.style.opacity = phase === "setup" ? "0.15" : "1";
-    content.style.pointerEvents = phase === "setup" ? "none" : "auto";
   }
 
   #initWorkspace() {
@@ -133,14 +130,14 @@ export class App {
       teamB: overlay.querySelector("#sl-color-b").value,
       ball: overlay.querySelector("#sl-color-ball").value,
     };
-    const ws = this.#root.querySelector("#workspace-content");
-    ws.querySelectorAll(".mode").forEach((b) => b.classList.toggle("active", b.dataset.mode === mode));
-    ws.querySelectorAll(".field-type").forEach((b) => b.classList.toggle("active", b.dataset.type === ftype));
-    ws.querySelector("#field-length").value = length;
-    ws.querySelector("#field-width").value = width;
-    ws.querySelector("#color-team-a").value = colors.teamA;
-    ws.querySelector("#color-team-b").value = colors.teamB;
-    ws.querySelector("#color-ball").value = colors.ball;
+    const t = this.#root; // root helper
+    t.querySelectorAll(".mode").forEach((b) => b.classList.toggle("active", b.dataset.mode === mode));
+    t.querySelectorAll(".field-type").forEach((b) => b.classList.toggle("active", b.dataset.type === ftype));
+    t.querySelector("#field-length").value = length;
+    t.querySelector("#field-width").value = width;
+    t.querySelector("#color-team-a").value = colors.teamA;
+    t.querySelector("#color-team-b").value = colors.teamB;
+    t.querySelector("#color-ball").value = colors.ball;
     this.#events.emit("settings.teamColors", colors);
     this.#events.emit("settings.modeChanged", { mode });
     this.#tactical?.refreshFieldType(ftype, { length, width });
@@ -192,7 +189,7 @@ export class App {
         <div class="privacy"><span></span> Local</div>
       </header>
       <main class="workspace">
-        <div class="workspace-content" id="workspace-content">
+        <div>
           <section class="hero panel">
             <p class="eyebrow">ANÁLISIS</p>
             <h1>Tu partido, entendido<br />desde la cancha.</h1>

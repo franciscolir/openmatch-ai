@@ -245,6 +245,11 @@ export class App {
         <div class="privacy"><span></span> Local</div>
       </header>
       <main class="workspace">
+        <div class="match-bar" id="match-bar" hidden>
+          <div class="bar-timer"><span id="timer-display">00:00</span></div>
+          <div class="bar-possession" id="possession-bar"><span class="pos-label pos-a" id="pos-a">A 50%</span><div class="pos-track"><div class="pos-fill pos-fill-a" id="pos-fill-a" style="width:50%"></div></div><span class="pos-label pos-b" id="pos-b">50% B</span></div>
+          <div class="bar-events" id="event-timeline"><div class="timeline-track" id="timeline-track"></div></div>
+        </div>
         <section class="capture panel">
             <div class="section-heading"><div><p class="eyebrow">NUEVO PARTIDO</p><h2>Fuente de video</h2></div><span id="source-status" class="status">Sin conectar</span></div>
             <div class="source-picker" role="group" aria-label="Origen del video">
@@ -434,11 +439,38 @@ export class App {
       }
       else if (mainState === "finalize") { this.#analysis.stop(); }
     });
+    let timerSeconds = 0, timerInterval = null;
+    const timerDisplay = this.#root.querySelector("#timer-display");
+    const startTimer = () => { if (timerInterval) return; timerInterval = setInterval(() => { timerSeconds++; timerDisplay.textContent = `${String(Math.floor(timerSeconds / 60)).padStart(2, "0")}:${String(timerSeconds % 60).padStart(2, "0")}`; }, 1000); };
+    const stopTimer = () => { if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } };
+    const resetTimer = () => { stopTimer(); timerSeconds = 0; timerDisplay.textContent = "00:00"; };
+    const posFillA = this.#root.querySelector("#pos-fill-a");
+    let possessionCount = { a: 0, b: 0 }, lastPossTs = 0;
     this.#events.on("camera.ready", () => { mainState = "calibrate"; updateMain(); });
     this.#events.on("video.loaded", () => { mainState = "calibrate"; updateMain(); });
     this.#events.on("field.calibrated", () => { mainState = "ready"; updateMain(); });
-    this.#events.on("analysis.ready", () => { mainState = "running"; updateMain(); });
-    this.#events.on("analysis.stopped", () => { mainState = "finalize"; updateMain(); });
+    this.#events.on("analysis.ready", () => {
+      mainState = "running"; updateMain(); startTimer();
+      this.#root.querySelector("#match-bar").hidden = false;
+    });
+    this.#events.on("analysis.stopped", () => {
+      mainState = "finalize"; updateMain(); stopTimer();
+    });
+    this.#events.on("field.calibrationStarted", resetTimer);
+    this.#events.on("tracking.updated", (ev) => {
+      const ball = (ev.detail.tracks || []).find((t) => t.label === "sports ball" && t.fieldPosition);
+      const players = (ev.detail.tracks || []).filter((t) => t.label === "person" && t.fieldPosition);
+      if (ball && players.length) {
+        const mid = this.#root.querySelector("#field-length")?.value || 105;
+        const teamA = players.filter((p) => p.fieldPosition.x < mid / 2).length;
+        const teamB = players.filter((p) => p.fieldPosition.x >= mid / 2).length;
+        const total = teamA + teamB || 1;
+        const pctA = Math.round((teamA / total) * 100);
+        posFillA.style.width = pctA + "%";
+        this.#root.querySelector("#pos-a").textContent = "A " + pctA + "%";
+        this.#root.querySelector("#pos-b").textContent = (100 - pctA) + "% B";
+      }
+    });
     updateMain();
     this.#heatmap = new Heatmap(this.#events, this.#root.querySelector("#heatmap-field"));
     const stage = this.#root.querySelector("#tactical-stage");
@@ -606,25 +638,35 @@ export class App {
       const name = this.#root.querySelector("#draw-template-name").value.trim();
       if (name && this.#drawTool.saveTemplate(name)) {
         this.#root.querySelector("#draw-template-name").value = "";
+        this.#renderTemplateList();
+      }
+    });
     const eventList = this.#root.querySelector("#event-list");
     const eventFeedback = this.#root.querySelector("#event-feedback");
+    const timelineTrack = this.#root.querySelector("#timeline-track");
     this.#root.querySelectorAll(".event-btn").forEach((btn) => btn.addEventListener("click", () => {
       const label = btn.textContent.trim();
       this.#recorder.markEvent(btn.dataset.event, label);
       showToast(`✓ ${label}`);
-      const li = document.createElement("li");
-      const elapsed = (Date.now() - this.#recorder.sessionStartedAt) / 1000;
+      const elapsed = (Date.now() - (this.#recorder.sessionStartedAt || Date.now())) / 1000;
       const m = Math.floor(elapsed / 60);
       const s = Math.floor(elapsed % 60);
+      const li = document.createElement("li");
       li.innerHTML = `<time>${m}:${String(s).padStart(2, "0")}</time> ${label}`;
       eventList.appendChild(li);
       eventFeedback.hidden = false;
       eventList.scrollTop = eventList.scrollHeight;
+      if (timelineTrack) {
+        const dot = document.createElement("span");
+        dot.className = "timeline-event";
+        const pct = Math.min(95, (elapsed / Math.max(1, timerSeconds)) * 100);
+        dot.style.left = pct + "%";
+        dot.title = m + ":" + String(s).padStart(2, "0") + " " + label;
+        dot.textContent = label.charAt(0);
+        timelineTrack.appendChild(dot);
+      }
     }));
     this.#unsubscribers.push(this.#events.on("analysis.stopped", () => { eventFeedback.hidden = true; eventList.innerHTML = ""; }));
-    this.#renderTemplateList();
-      }
-    });
     this.#renderTemplateList();
     this.#root.querySelectorAll(".mode").forEach((button) => button.addEventListener("click", () => {
       this.#root.querySelector(".mode.active")?.classList.remove("active");

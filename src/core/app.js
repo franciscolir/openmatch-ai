@@ -38,52 +38,104 @@ export class App {
   #unsubscribers = [];
   #isFrozen = false;
 
+  #view = "home";
+
   constructor(root) {
     this.#root = root;
   }
 
   async start() {
     if (location.protocol === "file:") {
-      this.#render();
-      const message = this.#root.querySelector("#camera-message");
-      if (message) message.textContent = "Sirve la app por http (npm run dev o npm run preview). Abrir el archivo directamente bloquea el worker de visión y la cámara.";
+      this.#renderHome();
       return;
     }
     if (!import.meta.env) {
-      this.#render();
-      const message = this.#root.querySelector("#camera-message");
-      if (message) message.textContent = "Esta app debe servirse con Vite (npm run dev, o npm run build + npm run preview). El servidor actual no procesa los módulos ni resuelve @mediapipe, por lo que el worker de visión no puede cargarse.";
+      this.#renderHome();
       return;
     }
     this.#destroy();
-    this.#render();
-    this.#dashboard = new Dashboard(this.#root, this.#events);
+    this.#renderHome();
     this.#store = new SessionStore(new IndexedDBBackend());
+    this.#registerServiceWorker();
+  }
+
+  #navigate(view) {
+    if (view === this.#view) return;
+    this.#view = view;
+    if (view === "home") {
+      this.#root.querySelector(".home-screen").hidden = false;
+      this.#root.querySelector(".workspace-screen")?.remove();
+      this.#destroyModules();
+    } else {
+      this.#root.querySelector(".home-screen").hidden = true;
+      this.#initWorkspace();
+    }
+  }
+
+  #initWorkspace() {
+    const ws = document.createElement("div");
+    ws.className = "workspace-screen";
+    ws.innerHTML = this.#workspaceHTML();
+    this.#root.appendChild(ws);
+    const homeLink = this.#root.querySelector("#home-link");
+    if (homeLink) homeLink.addEventListener("click", (e) => { e.preventDefault(); this.#navigate("home"); });
+    this.#dashboard = new Dashboard(this.#root, this.#events);
     this.#recorder = new SessionRecorder(this.#events, this.#store);
     this.#history = new HistoryPanel(this.#root, this.#events, this.#store);
     this.#insights = new InsightPanel(this.#root, this.#events, this.#store);
     this.#bindControls();
-    const profile = await getDeviceProfile();
-    const recommendedMode = this.#root.querySelector(`[data-mode="${profile.recommendedMode}"]`);
-    if (recommendedMode) {
-      this.#root.querySelector(".mode.active")?.classList.remove("active");
-      recommendedMode.classList.add("active");
-    }
-    this.#events.emit("device.ready", profile);
-    this.#events.emit("settings.modeChanged", { mode: profile.recommendedMode });
     this.#restoreSettings();
-    this.#registerServiceWorker();
+    getDeviceProfile().then((profile) => {
+      const btn = this.#root.querySelector(`[data-mode="${profile.recommendedMode}"]`);
+      if (btn) { this.#root.querySelector(".mode.active")?.classList.remove("active"); btn.classList.add("active"); }
+      this.#events.emit("device.ready", profile);
+      this.#events.emit("settings.modeChanged", { mode: profile.recommendedMode });
+    });
   }
 
-  #render() {
+  #renderHome() {
     this.#root.innerHTML = `
       <header class="topbar">
         <a class="brand" href="./" aria-label="OpenMatch AI, inicio"><span class="brand-mark">O</span>OpenMatch <b>AI</b></a>
         <div class="privacy"><span></span> Procesamiento 100% local</div>
       </header>
+      <main class="home-screen">
+        <section class="hero panel" style="text-align:center;padding:48px 32px">
+          <p class="eyebrow">PLATAFORMA TÁCTICA · ANÁLISIS LOCAL</p>
+          <h1 style="max-width:600px;margin:0 auto">Tu partido, entendido<br />desde la cancha.</h1>
+          <p class="lead" style="max-width:500px;margin:1em auto">Procesamiento 100% local. El video nunca sale de este dispositivo.</p>
+        </section>
+        <div class="home-cards">
+          <button class="home-card" data-nav="workspace">
+            <span class="home-card-icon">🎥</span>
+            <strong>Nuevo Partido</strong>
+            <span>Análisis en vivo o video grabado con detección de jugadores, posesión y mapa táctico.</span>
+          </button>
+          <button class="home-card" data-nav="workspace">
+            <span class="home-card-icon">📋</span>
+            <strong>Historial</strong>
+            <span>Sesiones guardadas con estadísticas, eventos e insights tácticos.</span>
+          </button>
+          <button class="home-card" data-nav="workspace">
+            <span class="home-card-icon">✎</span>
+            <strong>Práctica Táctica</strong>
+            <span>Dibujo de jugadas sobre video congelado. Crea y guarda plantillas tácticas.</span>
+          </button>
+        </div>
+      </main>
+      <footer>OpenMatch AI · MVP local-first · <span id="pwa-state">Comprobando modo offline…</span></footer>`;
+    this.#root.querySelectorAll("[data-nav]").forEach((btn) => btn.addEventListener("click", () => this.#navigate("workspace")));
+  }
+
+  #workspaceHTML() {
+    return `
+      <header class="topbar">
+        <a class="brand" href="#" id="home-link" aria-label="Volver al inicio"><span class="brand-mark">←</span>Inicio</a>
+        <div class="privacy"><span></span> Procesamiento 100% local</div>
+      </header>
       <main class="workspace">
         <section class="hero panel">
-          <p class="eyebrow">PLATAFORMA TÁCTICA · FASE 3</p>
+          <p class="eyebrow">PLATAFORMA TÁCTICA · ANÁLISIS LOCAL</p>
           <h1>Tu partido, entendido<br />desde la cancha.</h1>
           <p class="lead">Configura la captura. El video nunca sale de este dispositivo.</p>
           <div class="mode-picker" role="group" aria-label="Modo de procesamiento">
@@ -480,19 +532,35 @@ export class App {
     } catch (error) { console.warn("No se pudieron restaurar los ajustes:", error?.message || error); }
   }
 
-  #destroy() {
+  #destroyModules() {
     for (const unsub of this.#unsubscribers) unsub();
     this.#unsubscribers = [];
     this.#dashboard?.destroy?.();
+    this.#dashboard = undefined;
     this.#tracking?.destroy?.();
+    this.#tracking = undefined;
     this.#fieldCalibration?.destroy?.();
+    this.#fieldCalibration = undefined;
     this.#metrics?.destroy?.();
+    this.#metrics = undefined;
     this.#tactical?.destroy?.();
+    this.#tactical = undefined;
     this.#heatmap?.destroy?.();
+    this.#heatmap = undefined;
     this.#recorder?.destroy?.();
+    this.#recorder = undefined;
     this.#history?.destroy?.();
+    this.#history = undefined;
     this.#insights?.destroy?.();
+    this.#insights = undefined;
     this.#overlay?.destroy?.();
+    this.#overlay = undefined;
+    this.#analysis?.stop();
+    this.#analysis = undefined;
+  }
+
+  #destroy() {
+    this.#destroyModules();
   }
 
   #renderTemplateList() {

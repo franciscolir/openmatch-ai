@@ -1,7 +1,6 @@
 import { EventBus } from "./event-bus.js";
 import { CameraController } from "../modules/camera/camera-controller.js";
 import { VideoFileController } from "../modules/camera/video-file-controller.js";
-import { Dashboard } from "../modules/dashboard/dashboard.js";
 import { getDeviceProfile } from "../modules/settings/device-diagnostics.js";
 import { AnalysisController } from "../modules/detection/analysis-controller.js";
 import { OverlayRenderer } from "../modules/detection/overlay-renderer.js";
@@ -95,6 +94,10 @@ export class App {
     this.#recorder = new SessionRecorder(this.#events, this.#store);
     this.#bindControls();
     this.#restoreSettings();
+    (async () => {
+      const saved = await this.#store?.loadSetting("matchConfig");
+      if (saved) this.#tactical?.refreshFieldType(saved.fieldType || "football11", { length: saved.length || 105, width: saved.width || 68 });
+    })();
     this.#root.querySelector("#summary-new")?.addEventListener("click", () => { this.#navigate("home"); this.#navigate("match"); });
     this.#root.querySelector("#summary-home")?.addEventListener("click", () => this.#navigate("home"));
   }
@@ -244,29 +247,6 @@ export class App {
     // Re-render on save (the save button triggers after saveTemplate)
     const origSave = tool.saveTemplate.bind(tool);
     tool.saveTemplate = (name) => { const r = origSave(name); renderTemplates(); return r; };
-  }
-
-  #syncSetup() {
-    const overlay = this.#root.querySelector("#setup-overlay");
-    const mode = overlay.querySelector(".mode.active")?.dataset.mode || "balanced";
-    const ftype = overlay.querySelector(".field-type.active")?.dataset.type || "football11";
-    const length = Number(overlay.querySelector("#sl-field-length").value) || 105;
-    const width = Number(overlay.querySelector("#sl-field-width").value) || 68;
-    const config = {
-      mode,
-      fieldType: ftype,
-      length,
-      width,
-      teamA: { name: overlay.querySelector("#sl-team-a-name").value.trim(), color: overlay.querySelector("#sl-team-a-color").value },
-      teamB: { name: overlay.querySelector("#sl-team-b-name").value.trim(), color: overlay.querySelector("#sl-team-b-color").value },
-      ballColor: overlay.querySelector("#sl-ball-color").value,
-      duration: Number(overlay.querySelector("#sl-duration").value),
-      players: Number(overlay.querySelector("#sl-players").value),
-    };
-    this.#events.emit("settings.teamColors", { teamA: config.teamA.color, teamB: config.teamB.color, ball: config.ballColor });
-    this.#events.emit("settings.modeChanged", { mode });
-    this.#tactical?.refreshFieldType(ftype, { length, width });
-    this.#store.saveSetting("matchConfig", config).catch(() => {});
   }
 
   #renderHome() {

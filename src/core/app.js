@@ -771,13 +771,6 @@ export class App {
       select.innerHTML = devices.length ? devices.map((device, index) => `<option value="${device.deviceId}">${device.label || `Cámara ${index + 1}`}</option>`).join("") : "<option>No se encontraron cámaras</option>";
       select.disabled = !devices.length;
     });
-    fileInput.addEventListener("change", async () => {
-      const [file] = fileInput.files;
-      if (!file) return;
-      this.#camera.stop();
-      this.#analysis.stop();
-      await this.#videoFile.load(file);
-    });
     this.#unsubscribers.push(this.#events.on("camera.ready", () => {
       mainBtn.disabled = false;
       fieldToggle.disabled = false;

@@ -17,6 +17,16 @@ export function generateInsights(session) {
   if (teamTotal > 0) {
     insights.push(`Recorrido por equipo — A: ${Math.round(session.teamDistanceA)} m, B: ${Math.round(session.teamDistanceB)} m.`);
   }
+  const events = session.events || [];
+  const goals = events.filter((e) => e.type === "goal").length;
+  const faults = events.filter((e) => e.type === "fault").length;
+  const offsides = events.filter((e) => e.type === "offside").length;
+  const chances = events.filter((e) => e.type === "chance").length;
+  if (goals > 0) insights.push(`Goles registrados: ${goals}.`);
+  if (chances > 0) insights.push(`Ocasiones de gol: ${chances}.`);
+  if (faults > 3) insights.push(`Alta cantidad de faltas (${faults}); revisar disciplina defensiva.`);
+  if (offsides > 3) insights.push(`${offsides} fueras de juego — la defensa rival usa bien la línea.`);
+  if (chances > 0 && goals === 0) insights.push("Múltiples ocasiones sin gol — revisar efectividad de cara al arco.");
   insights.push(suggestion(session));
   return insights;
 }

@@ -277,7 +277,7 @@ export class App {
       const dims = defaults[type] || defaults.football11;
       this.#root.querySelector("#field-length").value = dims.length;
       this.#root.querySelector("#field-width").value = dims.width;
-      if (!this.#fieldCalibration.isActive && this.#fieldCalibration.fieldType !== type) {
+      if (!this.#fieldCalibration.isActive) {
         this.#tactical.refreshFieldType(type, dims);
       }
     };

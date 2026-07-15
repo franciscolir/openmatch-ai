@@ -50,6 +50,7 @@ export class TacticalField {
   #ctx;
   #dimensions = { length: 105, width: 68 };
   #fieldType = "football11";
+  #colors = { teamA: "#3da5ff", teamB: "#ff6b6b", ball: "#f5c518" };
   #tracks = [];
   #unsubscribers = [];
   #onResize;
@@ -72,6 +73,10 @@ export class TacticalField {
     }));
     this.#unsubscribers.push(events.on("analysis.stopped", () => {
       this.#tracks = [];
+    }));
+    this.#unsubscribers.push(events.on("settings.teamColors", (event) => {
+      this.#colors = event.detail;
+      this.#render();
     }));
     this.#resize();
     this.#onResize = () => this.#resize();
@@ -132,7 +137,7 @@ export class TacticalField {
       if (!track.fieldPosition) continue;
       const point = this.#toCanvas(track.fieldPosition.x, track.fieldPosition.y);
       const isBall = track.label === "sports ball";
-      ctx.fillStyle = isBall ? "#f5c518" : (track.fieldPosition.x < this.#dimensions.length / 2 ? "#3da5ff" : "#ff6b6b");
+      ctx.fillStyle = isBall ? this.#colors.ball : (track.fieldPosition.x < this.#dimensions.length / 2 ? this.#colors.teamA : this.#colors.teamB);
       ctx.beginPath();
       ctx.arc(point.x, point.y, isBall ? 3.5 : 5.5, 0, Math.PI * 2);
       ctx.fill();

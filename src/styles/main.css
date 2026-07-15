@@ -39,4 +39,9 @@
 .field-type-picker { display:flex; gap:6px; width:100%; }
 .field-type { flex:1; padding:8px 6px; border:1px solid var(--line); border-radius:7px; background:transparent; color:var(--muted); font-size:.7rem; text-align:center; cursor:pointer; }
 .field-type.active { border-color:var(--accent); background:var(--accent-dark); color:var(--accent); }
+.training-settings { width:100%; margin-top:4px; color:var(--muted); font-size:.75rem; }
+.training-settings summary { cursor:pointer; padding:6px 0; }
+.team-config { display:flex; gap:12px; padding:8px 0; flex-wrap:wrap; }
+.team-config label { display:flex; align-items:center; gap:6px; font-size:.72rem; flex:1; min-width:120px; }
+.team-config input[type="color"] { width:36px; height:30px; padding:1px; border:1px solid var(--line); border-radius:5px; background:transparent; cursor:pointer; }
 @media (max-width:590px) { .field-controls { flex-wrap:wrap; }.field-controls .select-wrap { min-width:42%; }.field-controls .secondary { width:100%; } }

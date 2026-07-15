@@ -120,6 +120,14 @@ export class App {
             <label class="select-wrap">Ancho (m)<input id="field-width" type="number" min="15" max="100" value="68" /></label>
             <button id="field-toggle" class="secondary" disabled>Calibrar cancha</button>
           </div>
+          <details class="training-settings">
+            <summary>Configuración de equipos</summary>
+            <div class="team-config">
+              <label>Equipo A <input id="color-team-a" type="color" value="#3da5ff" /></label>
+              <label>Equipo B <input id="color-team-b" type="color" value="#ff6b6b" /></label>
+              <label>Balón <input id="color-ball" type="color" value="#f5c518" /></label>
+            </div>
+          </details>
           <div id="file-controls" class="file-controls" hidden>
             <label class="file-picker" for="video-file"><span>Seleccionar video</span><input id="video-file" type="file" accept="video/*" /></label>
             <p id="file-name" class="file-name">Formatos compatibles con tu navegador. El archivo permanece en este dispositivo.</p>
@@ -304,6 +312,21 @@ export class App {
       this.#fieldCalibration.setFieldType(activeType);
       this.#fieldCalibration.start(dimensions);
     });
+    const emitTeamColors = () => {
+      const colors = {
+        teamA: this.#root.querySelector("#color-team-a").value,
+        teamB: this.#root.querySelector("#color-team-b").value,
+        ball: this.#root.querySelector("#color-ball").value,
+      };
+      this.#events.emit("settings.teamColors", colors);
+      this.#root.querySelector(".dot.team-a").style.background = colors.teamA;
+      this.#root.querySelector(".dot.team-b").style.background = colors.teamB;
+      this.#root.querySelector(".dot.ball").style.background = colors.ball;
+      this.#store.saveSetting("teamColors", colors).catch(() => {});
+    };
+    this.#root.querySelector("#color-team-a").addEventListener("input", emitTeamColors);
+    this.#root.querySelector("#color-team-b").addEventListener("input", emitTeamColors);
+    this.#root.querySelector("#color-ball").addEventListener("input", emitTeamColors);
     this.#root.querySelectorAll(".mode").forEach((button) => button.addEventListener("click", () => {
       this.#root.querySelector(".mode.active")?.classList.remove("active");
       button.classList.add("active");
@@ -353,6 +376,24 @@ export class App {
         if (lengthEl) lengthEl.value = field.length;
         if (widthEl) widthEl.value = field.width;
       }
+      const teamColors = await this.#store.loadSetting("teamColors");
+      if (teamColors) {
+        const aInput = this.#root.querySelector("#color-team-a");
+        const bInput = this.#root.querySelector("#color-team-b");
+        const ballInput = this.#root.querySelector("#color-ball");
+        if (teamColors.teamA && aInput) aInput.value = teamColors.teamA;
+        if (teamColors.teamB && bInput) bInput.value = teamColors.teamB;
+        if (teamColors.ball && ballInput) ballInput.value = teamColors.ball;
+      }
+      const colors = {
+        teamA: this.#root.querySelector("#color-team-a")?.value || "#3da5ff",
+        teamB: this.#root.querySelector("#color-team-b")?.value || "#ff6b6b",
+        ball: this.#root.querySelector("#color-ball")?.value || "#f5c518",
+      };
+      this.#events.emit("settings.teamColors", colors);
+      this.#root.querySelector(".dot.team-a").style.background = colors.teamA;
+      this.#root.querySelector(".dot.team-b").style.background = colors.teamB;
+      this.#root.querySelector(".dot.ball").style.background = colors.ball;
     } catch (error) { console.warn("No se pudieron restaurar los ajustes:", error?.message || error); }
   }
 

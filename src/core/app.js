@@ -37,6 +37,7 @@ export class App {
   #tracks = [];
   #unsubscribers = [];
   #isFrozen = false;
+  #calibrated = false;
 
   #view = "home";
 
@@ -521,29 +522,23 @@ export class App {
               </div>
               <button id="btn-flip" class="material-symbols-outlined p-2 rounded-full transition-colors" style="color:#c2cab0;font-size:20px">flip_camera_ios</button>
             </div>
-            <div class="h-48 flex gap-4">
-              <div class="flex-1 rounded-xl p-4 flex flex-col gap-3" style="background:rgba(16,24,39,.8);border:1px solid #263148">
-                <span class="text-xs font-bold tracking-widest uppercase" style="color:#c2cab0">Herramientas de campo</span>
-                <div class="grid grid-cols-2 gap-2">
-                  <button id="field-toggle" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors" style="background:#283549;color:#d5e3fd"><span class="material-symbols-outlined" style="font-size:18px">straighten</span> Calibrar cancha</button>
-                  <button id="draw-toggle" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors" style="background:#283549;color:#d5e3fd"><span class="material-symbols-outlined" style="font-size:18px">gesture</span> Dibujo táctico</button>
-                </div>
-                <div class="flex items-center gap-3 mt-1">
-                  <div class="flex-1"><label class="text-[10px] block mb-1" style="color:#c2cab0">Ancho (m)</label><input id="field-width" class="w-full rounded px-2 py-1 text-sm" style="background:#051426;border:1px solid #424935;color:#aff73f;font-family:monospace" value="68.0" /></div>
-                  <div class="flex-1"><label class="text-[10px] block mb-1" style="color:#c2cab0">Largo (m)</label><input id="field-length" class="w-full rounded px-2 py-1 text-sm" style="background:#051426;border:1px solid #424935;color:#aff73f;font-family:monospace" value="105.0" /></div>
-                </div>
+            <div class="flex gap-4" style="min-height:100px">
+              <div class="flex flex-col gap-2 justify-center" style="width:180px">
+                <button id="field-toggle" class="flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors" style="background:#283549;color:#d5e3fd"><span class="material-symbols-outlined" style="font-size:18px">straighten</span> Calibrar</button>
+                <div class="flex gap-2"><input id="field-width" class="flex-1 rounded px-2 py-1 text-xs text-center" placeholder="Ancho" style="background:#051426;border:1px solid #424935;color:#aff73f;font-family:monospace" value="68" /><input id="field-length" class="flex-1 rounded px-2 py-1 text-xs text-center" placeholder="Largo" style="background:#051426;border:1px solid #424935;color:#aff73f;font-family:monospace" value="105" /></div>
+                <button id="draw-toggle" class="flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors" style="background:#283549;color:#d5e3fd"><span class="material-symbols-outlined" style="font-size:16px">gesture</span> Dibujo</button>
                 <div class="draw-controls" id="draw-controls" hidden>
-                  <div class="flex gap-1 flex-wrap"><button class="draw-tool active px-2 py-1 rounded text-xs" data-tool="arrow" style="background:#283549">→</button><button class="draw-tool px-2 py-1 rounded text-xs" data-tool="line" style="background:#283549">╱</button><button class="draw-tool px-2 py-1 rounded text-xs" data-tool="circle" style="background:#283549">○</button><button class="draw-tool px-2 py-1 rounded text-xs" data-tool="text" style="background:#283549">T</button><button class="draw-tool px-2 py-1 rounded text-xs" data-tool="free" style="background:#283549">✎</button><input id="draw-color" type="color" value="#ffffff" style="width:28px;height:28px;padding:0;border:none;cursor:pointer" /></div>
-                  <div class="flex gap-2 mt-2 flex-wrap"><button id="draw-undo" class="px-2 py-1 rounded text-xs" style="background:#283549">↩</button><button id="draw-clear" class="px-2 py-1 rounded text-xs" style="background:#283549">✕</button><button id="draw-freeze" class="px-2 py-1 rounded text-xs" style="background:#283549">⏸</button><input id="draw-template-name" class="flex-1 rounded px-2 py-1 text-xs" placeholder="Nombre" style="min-width:80px;background:#051426;border:1px solid #424935;color:#d5e3fd" /><button id="draw-save-btn" class="px-2 py-1 rounded text-xs" style="background:#283549">Guardar</button></div>
+                  <div class="flex gap-1 flex-wrap mt-1"><button class="draw-tool active px-2 py-1 rounded text-xs" data-tool="arrow" style="background:#283549">→</button><button class="draw-tool px-2 py-1 rounded text-xs" data-tool="line" style="background:#283549">╱</button><button class="draw-tool px-2 py-1 rounded text-xs" data-tool="circle" style="background:#283549">○</button><button class="draw-tool px-2 py-1 rounded text-xs" data-tool="text" style="background:#283549">T</button><button class="draw-tool px-2 py-1 rounded text-xs" data-tool="free" style="background:#283549">✎</button><input id="draw-color" type="color" value="#ffffff" style="width:24px;height:24px;padding:0;border:none;cursor:pointer" /></div>
+                  <div class="flex gap-2 mt-1 flex-wrap"><button id="draw-undo" class="px-2 py-0.5 rounded text-xs" style="background:#283549">↩</button><button id="draw-clear" class="px-2 py-0.5 rounded text-xs" style="background:#283549">✕</button><button id="draw-freeze" class="px-2 py-0.5 rounded text-xs" style="background:#283549">⏸</button><input id="draw-template-name" class="flex-1 rounded px-2 py-0.5 text-xs" placeholder="Nombre" style="min-width:60px;background:#051426;border:1px solid #424935;color:#d5e3fd" /><button id="draw-save-btn" class="px-2 py-0.5 rounded text-xs" style="background:#283549">Guardar</button></div>
                   <div id="draw-templates" class="flex gap-1 flex-wrap mt-1"></div>
                 </div>
               </div>
-              <div class="w-80 rounded-xl overflow-hidden flex flex-col" style="background:rgba(16,24,39,.8);border:1px solid #263148">
+              <div class="flex-1 rounded-xl overflow-hidden flex flex-col" style="background:rgba(16,24,39,.8);border:1px solid #263148">
                 <div class="px-3 py-1.5 border-b flex justify-between items-center" style="background:#1d2b3e;border-color:#424935">
                   <span class="text-[10px] font-bold uppercase" style="color:#c2cab0">Vista táctica</span>
                   <span class="w-2 h-2 rounded-full" style="background:#aff73f"></span>
                 </div>
-                <div class="flex-1 relative" style="background:radial-gradient(circle at center,#162235 0%,#101827 100%)">
+                <div class="flex-1 relative" style="min-height:200px;background:radial-gradient(circle at center,#162235 0%,#101827 100%)">
                   <canvas id="tactical-field" class="absolute inset-0 w-full h-full"></canvas>
                   <canvas id="heatmap-field" class="absolute inset-0 w-full h-full" hidden></canvas>
                 </div>
@@ -634,8 +629,7 @@ export class App {
     const updateMain = () => {
       const texts = {
         idle: "📷 Iniciar cámara",
-        calibrate: "📐 Calibrar cancha",
-        ready: "▶️ Iniciar análisis",
+        ready: "▶️ Comenzar partido",
         running: "⏸️ Pausar",
         paused: "▶️ Reanudar",
         finalize: "⏹️ Finalizar",
@@ -643,17 +637,12 @@ export class App {
       if (mainBtn) {
         const actionSpan = mainBtn.querySelector("#action-text");
         if (actionSpan) actionSpan.textContent = texts[mainState] || texts.idle;
-        mainBtn.disabled = false;
+        mainBtn.disabled = mainState === "ready" && !this.#calibrated;
       }
     };
     if (mainBtn) {
       mainBtn.addEventListener("click", () => {
         if (mainState === "idle") { this.#camera.start({ deviceId: cameraSelect?.value, height: getQuality() }).catch(() => {}); }
-      else if (mainState === "calibrate") {
-        const dims = { length: Number(this.#root.querySelector("#field-length").value), width: Number(this.#root.querySelector("#field-width").value) };
-        this.#fieldCalibration.start(dims);
-        mainState = "ready"; updateMain();
-      }
       else if (mainState === "ready") {
         this.#analysis.start("balanced").catch(() => {});
         mainState = "running"; updateMain();
@@ -673,9 +662,10 @@ export class App {
     const resetTimer = () => { stopTimer(); timerSeconds = 0; timerDisplay.textContent = "00:00"; };
     const posFillA = this.#root.querySelector("#pos-fill-a");
     let possessionCount = { a: 0, b: 0 }, lastPossTs = 0;
-    this.#events.on("camera.ready", () => { mainState = "calibrate"; updateMain(); });
-    this.#events.on("video.loaded", () => { mainState = "calibrate"; updateMain(); });
-    this.#events.on("field.calibrated", () => { mainState = "ready"; updateMain(); });
+    this.#events.on("camera.ready", () => { mainState = "ready"; updateMain(); });
+    this.#events.on("video.loaded", () => { mainState = "ready"; updateMain(); });
+    this.#events.on("field.calibrationStarted", () => { this.#calibrated = false; updateMain(); });
+    this.#events.on("field.calibrated", () => { this.#calibrated = true; mainState = "ready"; updateMain(); });
     const updateTelemetry = () => {
       const v = this.#root.querySelector("#camera-preview");
       if (v?.videoWidth) {

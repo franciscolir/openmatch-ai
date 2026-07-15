@@ -246,8 +246,9 @@ export class TacticalField {
     }
   }
 
-  refreshFieldType(type) {
+  refreshFieldType(type, dimensions) {
     this.#fieldType = type;
+    if (dimensions) this.#dimensions = dimensions;
     this.#resize();
   }
 }

@@ -5,7 +5,7 @@ export class HistoryPanel {
   #unsubscribers = [];
 
   constructor(root, events, store) {
-    this.#root = root.querySelector("#history") || root;
+    this.#root = root?.querySelector("#history");
     this.#events = events;
     this.#store = store;
     this.#unsubscribers.push(events.on("session.saved", () => this.#render()));

@@ -93,8 +93,6 @@ export class App {
     const homeLink = this.#root.querySelector("#home-link");
     if (homeLink) homeLink.addEventListener("click", (e) => { e.preventDefault(); this.#navigate("home"); });
     this.#recorder = new SessionRecorder(this.#events, this.#store);
-    this.#history = new HistoryPanel(this.#root, this.#events, this.#store);
-    this.#insights = new InsightPanel(this.#root, this.#events, this.#store);
     this.#bindControls();
     this.#restoreSettings();
     this.#root.querySelector("#summary-new")?.addEventListener("click", () => { this.#navigate("home"); this.#navigate("match"); });

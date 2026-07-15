@@ -14,6 +14,7 @@ import { SessionStore, IndexedDBBackend } from "../modules/storage/session-store
 import { SessionRecorder } from "../modules/storage/session-recorder.js";
 import { HistoryPanel } from "../modules/storage/history-panel.js";
 import { InsightPanel } from "../modules/insights/insight-panel.js";
+import { DrawTool } from "../modules/tactics/draw-tool.js";
 
 export class App {
   #root;
@@ -32,8 +33,10 @@ export class App {
   #recorder;
   #history;
   #insights;
+  #drawTool;
   #tracks = [];
   #unsubscribers = [];
+  #isFrozen = false;
 
   constructor(root) {
     this.#root = root;
@@ -100,6 +103,7 @@ export class App {
             <video id="camera-preview" autoplay playsinline muted></video>
             <canvas id="analysis-overlay" aria-label="Detecciones locales de visión artificial"></canvas>
             <canvas id="field-overlay" aria-label="Calibración manual de cancha"></canvas>
+            <canvas id="draw-overlay" aria-label="Dibujo táctico" hidden></canvas>
             <div class="video-empty" id="video-empty"><span class="camera-icon">⌁</span><strong>La cámara está lista cuando tú lo estés</strong><p>Conecta una cámara del dispositivo o una webcam USB.</p></div>
             <div class="overlay-label">LIVE <span></span> LOCAL</div>
           </div>
@@ -119,6 +123,24 @@ export class App {
             <label class="select-wrap">Largo (m)<input id="field-length" type="number" min="20" max="130" value="105" /></label>
             <label class="select-wrap">Ancho (m)<input id="field-width" type="number" min="15" max="100" value="68" /></label>
             <button id="field-toggle" class="secondary" disabled>Calibrar cancha</button>
+            <button id="draw-toggle" class="secondary" disabled>✎ Dibujo táctico</button>
+          </div>
+          <div class="draw-controls" id="draw-controls" hidden>
+            <div class="draw-toolbar" role="group" aria-label="Herramientas de dibujo táctico">
+              <button class="draw-tool active" data-tool="arrow" title="Flecha">→</button>
+              <button class="draw-tool" data-tool="line" title="Línea">╱</button>
+              <button class="draw-tool" data-tool="circle" title="Círculo">○</button>
+              <button class="draw-tool" data-tool="text" title="Texto">T</button>
+              <button class="draw-tool" data-tool="free" title="Mano alzada">✎</button>
+              <label class="draw-color" title="Color"><input id="draw-color" type="color" value="#ffffff" /></label>
+              <button id="draw-undo" title="Deshacer">↩</button>
+              <button id="draw-clear" title="Limpiar todo">✕</button>
+            </div>
+            <div class="draw-actions">
+              <button id="draw-freeze" class="secondary">Congelar video</button>
+              <label class="draw-save">Guardar: <input id="draw-template-name" type="text" placeholder="Nombre de la jugada" /><button id="draw-save-btn" class="secondary">Guardar</button></label>
+            </div>
+            <div id="draw-templates"></div>
           </div>
           <details class="training-settings">
             <summary>Configuración de equipos</summary>
@@ -167,6 +189,19 @@ export class App {
     this.#overlay = new OverlayRenderer(this.#root.querySelector("#analysis-overlay"), preview);
     this.#analysis = new AnalysisController(this.#events, preview);
     this.#tracking = new TrackManager(this.#events);
+    const drawOverlay = this.#root.querySelector("#draw-overlay");
+    const fitDrawCanvas = () => {
+      const rect = preview.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      drawOverlay.width = Math.round(rect.width * dpr);
+      drawOverlay.height = Math.round(rect.height * dpr);
+      drawOverlay.style.width = rect.width + "px";
+      drawOverlay.style.height = rect.height + "px";
+    };
+    fitDrawCanvas();
+    const drawResizeObserver = new ResizeObserver(fitDrawCanvas);
+    drawResizeObserver.observe(preview);
+    this.#drawTool = new DrawTool(drawOverlay);
     this.#fieldCalibration = new FieldCalibration(this.#events, this.#root.querySelector("#field-overlay"), preview);
     this.#metrics = new MetricsCalculator(this.#events);
     this.#tactical = new TacticalField(this.#events, this.#root.querySelector("#tactical-field"));
@@ -202,6 +237,7 @@ export class App {
       toggle.textContent = "Detener cámara";
       analysisToggle.disabled = false;
       fieldToggle.disabled = false;
+      drawToggle.disabled = false;
       sourceStatus.textContent = "En directo";
       sourceStatus.classList.add("live");
       this.#root.querySelector("#video-empty").hidden = true;
@@ -210,6 +246,7 @@ export class App {
     this.#unsubscribers.push(this.#events.on("camera.stopped", () => {
       toggle.textContent = "Iniciar cámara";
       analysisToggle.disabled = true;
+      drawToggle.disabled = true;
       this.#analysis.stop();
       this.#fieldCalibration.cancel();
       this.#overlay.clear();
@@ -224,6 +261,7 @@ export class App {
       sourceStatus.textContent = "Video cargado";
       analysisToggle.disabled = false;
       fieldToggle.disabled = false;
+      drawToggle.disabled = false;
       sourceStatus.classList.add("live");
       this.#root.querySelector("#video-empty").hidden = true;
       this.#root.querySelector("#file-name").textContent = `${event.detail.file.name} · ${event.detail.file.sizeLabel}`;
@@ -327,6 +365,36 @@ export class App {
     this.#root.querySelector("#color-team-a").addEventListener("input", emitTeamColors);
     this.#root.querySelector("#color-team-b").addEventListener("input", emitTeamColors);
     this.#root.querySelector("#color-ball").addEventListener("input", emitTeamColors);
+    const drawToggle = this.#root.querySelector("#draw-toggle");
+    const drawControls = this.#root.querySelector("#draw-controls");
+    drawToggle.addEventListener("click", () => {
+      const isVisible = !drawControls.hidden;
+      drawControls.hidden = isVisible;
+      drawOverlay.hidden = isVisible;
+      drawToggle.textContent = isVisible ? "✎ Dibujo táctico" : "✕ Cerrar dibujo";
+    });
+    this.#root.querySelectorAll(".draw-tool").forEach((btn) => btn.addEventListener("click", () => {
+      this.#root.querySelectorAll(".draw-tool").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      this.#drawTool.setTool(btn.dataset.tool);
+    }));
+    this.#root.querySelector("#draw-color").addEventListener("input", (e) => this.#drawTool.setColor(e.target.value));
+    this.#root.querySelector("#draw-undo").addEventListener("click", () => this.#drawTool.undo());
+    this.#root.querySelector("#draw-clear").addEventListener("click", () => this.#drawTool.clear());
+    const freezeBtn = this.#root.querySelector("#draw-freeze");
+    freezeBtn.addEventListener("click", () => {
+      this.#isFrozen = !this.#isFrozen;
+      this.#root.querySelector("#camera-preview").pause();
+      freezeBtn.textContent = this.#isFrozen ? "▶ Reanudar video" : "⏸ Congelar video";
+    });
+    this.#root.querySelector("#draw-save-btn").addEventListener("click", () => {
+      const name = this.#root.querySelector("#draw-template-name").value.trim();
+      if (name && this.#drawTool.saveTemplate(name)) {
+        this.#root.querySelector("#draw-template-name").value = "";
+        this.#renderTemplateList();
+      }
+    });
+    this.#renderTemplateList();
     this.#root.querySelectorAll(".mode").forEach((button) => button.addEventListener("click", () => {
       this.#root.querySelector(".mode.active")?.classList.remove("active");
       button.classList.add("active");
@@ -410,6 +478,19 @@ export class App {
     this.#history?.destroy?.();
     this.#insights?.destroy?.();
     this.#overlay?.destroy?.();
+  }
+
+  #renderTemplateList() {
+    const container = this.#root.querySelector("#draw-templates");
+    const templates = this.#drawTool.getTemplates();
+    container.innerHTML = templates.length ? templates.map((t) =>
+      `<button class="template-load" data-name="${t.name.replace(/"/g, "&quot;")}">${t.name}</button>`
+    ).join("") : "";
+    container.querySelectorAll(".template-load").forEach((btn) => btn.addEventListener("click", () => {
+      if (confirm(`Cargar plantilla "${btn.dataset.name}"? Se perderá el dibujo actual.`)) {
+        this.#drawTool.loadTemplate(btn.dataset.name);
+      }
+    }));
   }
 
   async #registerServiceWorker() {

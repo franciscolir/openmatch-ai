@@ -25,9 +25,24 @@
 .view-toggle .view.active { background:var(--accent-dark); color:var(--accent); }
 .tactical-stage.show-heatmap #tactical-field { display:none; }
 .tactical-stage:not(.show-heatmap) #heatmap-field { display:none; }
+.draw-controls { padding-top:12px; }
+.draw-toolbar { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+.draw-tool { min-width:34px; height:34px; border:1px solid var(--line); border-radius:6px; background:transparent; color:var(--muted); font-size:1rem; cursor:pointer; display:grid; place-items:center; }
+.draw-tool.active { border-color:var(--accent); background:var(--accent-dark); color:var(--accent); }
+.draw-color { display:flex; align-items:center; }
+.draw-color input[type="color"] { width:34px; height:34px; padding:2px; border:1px solid var(--line); border-radius:6px; background:transparent; cursor:pointer; }
+#draw-undo, #draw-clear { min-width:34px; height:34px; border:1px solid var(--line); border-radius:6px; background:transparent; color:var(--muted); font-size:.85rem; cursor:pointer; }
+.draw-actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; padding-top:8px; }
+.draw-save { display:flex; gap:6px; align-items:center; font-size:.72rem; color:var(--muted); flex:1; }
+.draw-save input { flex:1; min-width:100px; padding:8px; border:1px solid var(--line); border-radius:6px; background:#111a2a; color:var(--text); font-size:.75rem; }
+#draw-templates { display:flex; gap:8px; flex-wrap:wrap; padding-top:8px; }
+#draw-templates button { padding:6px 10px; border:1px solid var(--line); border-radius:6px; background:transparent; color:var(--muted); font-size:.7rem; cursor:pointer; }
+#draw-templates button:hover { border-color:var(--accent); color:var(--accent); }
 @media (max-width:900px) { .workspace { grid-template-columns:1fr; }.sidebar { grid-column:1; grid-row:auto; display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }.dashboard { margin:0; }.topbar,.workspace,footer { padding-left:18px; padding-right:18px; } } @media (max-width:590px) { .privacy { display:none; }.hero { padding:28px 22px; }.capture { padding:16px; }.video-stage { min-height:260px; }.camera-controls { flex-wrap:wrap; }.select-wrap { min-width:42%; }.primary { width:100%; }.sidebar { grid-template-columns:1fr; } }
 
 .video-stage canvas { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+#draw-overlay { z-index:4; cursor:crosshair; }
+#draw-overlay:not([hidden]) { pointer-events:auto; }
 .video-empty, .overlay-label { z-index:1; }
 .secondary { padding:11px 16px; border:0; border-radius:7px; background:#25344d; color:var(--text); font-size:.8rem; font-weight:800; }
 .secondary:disabled { cursor:not-allowed; opacity:.5; }
